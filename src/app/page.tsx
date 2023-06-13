@@ -1,6 +1,8 @@
 "use client";
 import {useState} from "react";
 import {generatePDF, generateLessonPlan, parseRawLessonPlan} from "@/utils";
+import {icon} from '@fortawesome/fontawesome-svg-core/import.macro'
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
 type Detail = 'Medium' | 'High' | 'Low'
 
@@ -16,8 +18,9 @@ export default function Home() {
   const [sessionNumber, setSessionNumber] = useState<Number>();
   const [sessionDuration, setSessionDuration] = useState<Number>();
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [isGeneratedLessonPlan, setIsGeneratedLessonPlan] = useState<boolean>(true);
 
-  const onSubmit = () => {
+  const onSubmit = async () => {
       // check if grade is >=1 and <= 12
       // verify that this is only going to be for grades 1-12 -> it is
       console.log(subject, topic, grade, detail)
@@ -28,13 +31,17 @@ export default function Home() {
         return;
       }
 
-      generateLessonPlan(subject, topic, String(grade), detail, `${sessionNumber} sessions for ${sessionDuration} minutes each`);
-
+      const lessonPlan = await generateLessonPlan(subject, topic, String(grade), detail, `${sessionNumber} sessions for ${sessionDuration} minutes each`);
+      console.log(lessonPlan);
+      const parsedLessonPlan = parseRawLessonPlan(lessonPlan);
+      console.log(parsedLessonPlan);
+      generatePDF(parsedLessonPlan);
+      setIsGeneratedLessonPlan(true);
 
   }
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+    <main className="flex min-h-screen w-full bg-red-500 flex-col items-center justify-between p-24">
       <text className='absolute left-5 top-5 font-semibold text-xl'>LessonGPT</text>
       <div className=''>
           {/*{['subject', 'topic', 'grade', 'detail', 'duration'].map((inputField) => {*/}
@@ -76,6 +83,12 @@ export default function Home() {
           {errorMessage.length > 0 && (
               <div className='bg-red-300 p-4 rounded-xl text-white'>
                   <p>{errorMessage}</p>
+              </div>
+          )}
+          {isGeneratedLessonPlan && (
+              <div className=''>
+                <input placeholder={'Write instructions for improvements'} type={'text'} className={'mt-2 p-2 bg-white text-black w-full rounded-xl'}/>
+                  <FontAwesomeIcon icon={icon({name: 'send'})} />
               </div>
           )}
       </div>
