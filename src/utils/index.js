@@ -9,6 +9,7 @@ pdfMake.vfs = pdfFonts.pdfMake.vfs;
 const model = new ChatOpenAI({temperature: 0.5, openAIApiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY});
 
 const lessonPromptTemplateText = `
+{additionalPrompt}
 Generate a lesson plan given the following context:
 
 Subject: {subject}
@@ -65,9 +66,9 @@ const lessonPromptTemplate = ChatPromptTemplate.fromPromptMessages([
 const chain = new LLMChain({llm: model, prompt: lessonPromptTemplate});
 
 
-export const generateLessonPlan = async (subject, topic, grade, detailLevel, duration) => {
+export const generateLessonPlan = async (subject, topic, grade, detailLevel, duration, additionalPrompt='') => {
     console.log('generateLessonPlan running')
-    const response = await chain.call({subject, topic, grade, detailLevel, duration})
+    const response = await chain.call({subject, topic, grade, detailLevel, duration, additionalPrompt})
     console.log('response generated')
     return response.text;
 }
@@ -229,4 +230,6 @@ export const generatePDF = (parsedLessonPlan) => {
 
 // generatePDF(parseRawLessonPlan(sampleLessonPlan));
 
-
+export const updateLessonPlan = async (subject, topic, grade, detailLevel, duration, additionalPrompt) => {
+    return await generateLessonPlan(subject, topic, grade, detailLevel, duration, (additionalPrompt + '\nKeep this in mind while doing the following task.'))
+}
