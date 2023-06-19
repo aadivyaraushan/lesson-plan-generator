@@ -1,10 +1,10 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {generatePDF, generateLessonPlan, parseRawLessonPlan, updateLessonPlan} from "@/utils";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import { faArrowAltCircleRight } from "@fortawesome/free-solid-svg-icons";
+import Head from 'next/head'
 
-type Detail = 'Medium' | 'High' | 'Low'
 
 export default function Home() {
   const textStyle = 'text-xl text-left';
@@ -20,14 +20,16 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isGeneratedLessonPlan, setIsGeneratedLessonPlan] = useState<boolean>(false);
   const [lessonPlanUpdate, setLessonPlanUpdate] = useState<string>('');
-  const [lessonPlanUpdates, setLessonPlanUpdates] = useState<string[]>([]);
   const [isLoadingGenerate, setIsLoadingGenerate] = useState<boolean>();
   const [isLoadingModify, setIsLoadingModify] = useState<boolean>(false);
+  const [region, setRegion] = useState<string>('');
+  const [curriculum, setCurriculum] = useState<string>('');
+  const [teacher, setTeacher] = useState<string>('');
 
   const onSubmit = async () => {
       // check if grade is >=1 and <= 12
       // verify that this is only going to be for grades 1-12 -> it is
-      console.log(subject, topic, grade, detail)
+      // console.log(subject, topic, grade, detail)
 
       // @ts-ignore
       if(grade < 1 || grade > 12) {
@@ -47,10 +49,10 @@ export default function Home() {
 
 
       setIsLoadingGenerate(true);
-      const lessonPlan = await generateLessonPlan(subject, topic, String(grade), detail, `${sessionNumber} sessions for ${sessionDuration} minutes each`);
-      console.log(lessonPlan);
+      const lessonPlan = await generateLessonPlan(subject, topic, String(grade), detail, `${sessionNumber} sessions for ${sessionDuration} minutes each`, '', region, curriculum, teacher);
+      // console.log(lessonPlan);
       const parsedLessonPlan = parseRawLessonPlan(lessonPlan);
-      console.log(parsedLessonPlan);
+      // console.log(parsedLessonPlan);
       generatePDF(parsedLessonPlan);
       setIsGeneratedLessonPlan(true);
       setIsLoadingGenerate(false);
@@ -58,26 +60,23 @@ export default function Home() {
   }
 
   const onSubmitModifications = async () => {
-    let lessonPlanUpdatesTogether = '';
-    for (let lessonPlanUpdate of lessonPlanUpdates) {
-      lessonPlanUpdatesTogether += lessonPlanUpdate + '\n';
-    }
     setIsLoadingModify(true);
-    const lessonPlan = await updateLessonPlan(subject, topic, grade, detail, `${sessionNumber} sessions for ${sessionDuration} minutes each`, lessonPlanUpdatesTogether)
-    console.log(lessonPlan)
+    const lessonPlan = await updateLessonPlan(subject, topic, grade, detail, `${sessionNumber} sessions for ${sessionDuration} minutes each`, lessonPlanUpdate, region, curriculum, teacher)
+    // console.log(lessonPlan)
     const parsedLessonPlan = parseRawLessonPlan(lessonPlan);
-    console.log(parsedLessonPlan);
+    // console.log(parsedLessonPlan);
     generatePDF(parsedLessonPlan);
     setIsLoadingModify(false);
   }
 
-  useEffect(() => {
-    // @ts-ignore
-    setLessonPlanUpdates(lessonPlanUpdates => [...lessonPlanUpdates, lessonPlanUpdate]);
-  }, [lessonPlanUpdate])
-
   return (
+    <>
+      <Head>
+        <title>LessonJS</title>
+        <meta property="og:title" content="LessonGPT" key="title" />
+      </Head>
     <main className="flex min-h-screen w-full flex-col items-center justify-between p-24">
+
       <text className='absolute left-5 top-5 font-semibold text-xl'>LessonGPT</text>
       <div className=''>
           {/*{['subject', 'topic', 'grade', 'detail', 'duration'].map((inputField) => {*/}
@@ -95,6 +94,18 @@ export default function Home() {
               <p className={textStyle}>Topic: </p>
               <input className={inputStyle} value={topic} onChange={(e) => setTopic(e.target.value)}/>
           </div>
+          <div className={containerStyle}>
+            <p className={textStyle}>Region: </p>
+            <input className={inputStyle} value={region} onChange={(e) => setRegion(e.target.value)}/>
+          </div>
+          <div className={containerStyle}>
+            <p className={textStyle}>Curriculum: </p>
+            <input className={inputStyle} value={curriculum} onChange={(e) => setCurriculum(e.target.value)}/>
+          </div>
+        <div className={containerStyle}>
+          <p className={textStyle}>Teacher: </p>
+          <input className={inputStyle} value={teacher} onChange={(e) => setTeacher(e.target.value)}/>
+        </div>
           <div className={containerStyle}>
               <p className={textStyle}>Grade: </p>
             <div className='flex '>
@@ -140,21 +151,24 @@ export default function Home() {
               </div>
           )}
           {isGeneratedLessonPlan && (
+            <>
               <div className='flex'>
                 <input placeholder={'Write instructions for improvements'} type={'text'} className={'mt-2 p-2 bg-white text-black w-full rounded-xl'} value={lessonPlanUpdate} onChange={e => setLessonPlanUpdate(e.target.value)}/>
                   <FontAwesomeIcon onClick={onSubmitModifications} icon={faArrowAltCircleRight} className={'mt-2 ml-2 text-4xl '} />
-                {isLoadingModify &&
-                      <div
-                        className="inline-block ml-2 h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
-                        role="status">
-                        <span
-                          className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]"
-                        >Loading...
-                        </span>
-                      </div>}
               </div>
+            {isLoadingModify &&
+              <div
+              className="inline-block ml-2 h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
+              role="status">
+              <span
+              className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]"
+              >Loading...
+              </span>
+              </div>}
+            </>
           )}
       </div>
     </main>
+    </>
   )
 }

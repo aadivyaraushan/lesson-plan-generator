@@ -15,30 +15,44 @@ Generate a lesson plan given the following context:
 Subject: {subject}
 Topic: {topic}
 Grade: {grade}
+Teacher name: {teacher}
 Detail: {detailLevel}
 Duration: {duration}
+Region: {region}
+Curriculum: {curriculum}
 
 Include, in key/value pairs:
 - Lesson Title
+- Teacher name
 - Subject
 - Grade
 - Date
 - Duration
-- Key vocabulary (as a bulleted list, don't include this text in brackets in the output)
-- Supporting materials and resources (as a bulleted list, don't include this text in brackets in the output) 
-- Learning outcomes through Knowledge
-- Learning outcomes through skills
-- Learning outcomes through understandings
+- Key vocabulary (as a bulleted list, DON'T make it a comma-separated list don't include this text in brackets in the output)
+- Supporting materials and resources (as a bulleted list, DON'T include a colon (:) in this, don't include this text in brackets in the output) 
+- Learning outcomes through Knowledge (key should be as is, as given here, don't include this text in brackets in output)
+- Learning outcomes through skills (key should be as is, as given here, don't include this text in brackets in output)
+- Learning outcomes through understandings (key should be as is, as given here, don't include this text in brackets in output)
 - Modifications for students who need extra support
 - Modifications for extra challenge
 - Preparation of learning by students
 - Planning of learning by students
-- Investigation for students to carry out to learn (separate from session-by-session description, don't include this text in brackets in the output)
+- Investigation for students to carry out to learn (separate from session-by-session description, include where students can record findings, don't include this text in brackets in the output)
 - Application of learning by students
-- Connection of learning to personal, local and global situations by students
+- Connection of learning to personal, local and global situations by students (do not put a comma after local, don't include this text in brackets in output)
 - Evaluation and reflection on learning by students
 - Assessment of learning by students
 
+Example of commma-separated list: egg, bacon, socks
+Avoid this when generating supporting materials and key vocabulary.
+
+Example of a sentence including colon: 
+    Video: John Doe
+Avoid this when generating any bulleted lists in this file.
+Bulleted lists refer to, for example:
+- Hello
+- Hi
+- How are you
 
 Also, include "Guiding Questions for Educators to Reflect on and Improve their Lesson" (state it exactly as written).
 
@@ -54,7 +68,10 @@ Session 1:
 Don't write numbered lists for any part of the response. Always write bulleted lists.
 For any key/value pairs, include a colon (:). For any bulleted list items (supporting materials and resources, lesson title), DO NOT use colons (:). 
 
-
+Ensure the plan is age-appropriate (by the grade given) and culturally relevant and acceptable in the region.
+Use examples based on the region throughout the lesson plan. Make sure that the plan is tailored for the region given.
+Keep in mind the curriculum and its objectives when generating.
+Ensure that the learning experiences are safe for learners.
 `
 
 const lessonPromptTemplate = ChatPromptTemplate.fromPromptMessages([
@@ -66,10 +83,10 @@ const lessonPromptTemplate = ChatPromptTemplate.fromPromptMessages([
 const chain = new LLMChain({llm: model, prompt: lessonPromptTemplate});
 
 
-export const generateLessonPlan = async (subject, topic, grade, detailLevel, duration, additionalPrompt='') => {
-    console.log('generateLessonPlan running')
-    const response = await chain.call({subject, topic, grade, detailLevel, duration, additionalPrompt})
-    console.log('response generated')
+export const generateLessonPlan = async (subject, topic, grade, detailLevel, duration, additionalPrompt='', region, curriculum, teacher) => {
+    // console.log('generateLessonPlan running')
+    const response = await chain.call({subject, topic, grade, detailLevel, duration, additionalPrompt, region, curriculum, teacher})
+    // console.log('response generated')
     return response.text;
 }
 
@@ -78,6 +95,7 @@ export const parseRawLessonPlan = (rawLessonPlan)=> {
     const parsedLessonPlan  = {}
     const planComponents = rawLessonPlan.split('\n')    ;
     let currentKey = null;
+    console.log(rawLessonPlan);
 
     for (let i = 0; i < planComponents.length; i++) {
         const planComponent = planComponents[i]
@@ -89,7 +107,7 @@ export const parseRawLessonPlan = (rawLessonPlan)=> {
 
             if(isKeyValueComponent) {
                 let [key, value] = planComponent.split(':')
-                key = key.trim().toLowerCase();
+                key = key.trim().toLowerCase().replace(',', '');
                 key = key.replace('- ', '')
                 value = value.trim()
                 parsedLessonPlan[key] = value;
@@ -129,11 +147,22 @@ const createTable = (body) => {
     }
 }
 
+function isIterable(obj) {
+    // checks for null and undefined
+    if (obj == null) {
+        return false;
+    }
+    return typeof obj[Symbol.iterator] === 'function';
+}
+
 const generateList = (array)  => {
     let output = ''
-    console.log('generating a list for ' + array);
+    // console.log('generating a list for ' + array);
+    if(!isIterable(array)) {
+        return '· ' + array;
+    }
     for (let element of array) {
-        output += '● ' + element + '\n'
+        output += '· ' + element + '\n'
     }
     return output
 }
@@ -147,12 +176,12 @@ export const generatePDF = (parsedLessonPlan) => {
 
     const sessionBySessionData = []
     for (const key of Object.keys(parsedLessonPlan)) {
-        console.log('key: ' + key)
+        // console.log('key: ' + key)
         if (key.startsWith('session ')) {
             sessionBySessionData.push([key[0].toUpperCase() + key.slice(1), parsedLessonPlan[key]])
         }
     }
-    console.log('session by session data: ' + sessionBySessionData);
+    // console.log('session by session data: ' + sessionBySessionData);
 
     const docDefinition = {
         content: [
@@ -162,7 +191,7 @@ export const generatePDF = (parsedLessonPlan) => {
                 layout: 'lightHorizontalLines',
                 table: createTable([
                     ['Grade: ', parsedLessonPlan['grade']],
-                    ['Duration: ', parsedLessonPlan['duration']],
+                    ['Teacher: ', parsedLessonPlan['teacher name']],
                     ['Key Vocabulary: ', generateList(parsedLessonPlan['key vocabulary'])],
                     ['Materials: ', generateList(parsedLessonPlan['supporting materials and resources'])]
                 ])
@@ -192,7 +221,7 @@ export const generatePDF = (parsedLessonPlan) => {
                     ['Planning', generateList(parsedLessonPlan['planning of learning by students'])],
                     ['Investigation', generateList(parsedLessonPlan['investigation for students to carry out to learn'])],
                     ['Application', generateList(parsedLessonPlan['application of learning by students'])],
-                    ['Connection', generateList(parsedLessonPlan['connection of learning to personal, local and global situations by students'])],
+                    ['Connection', generateList(parsedLessonPlan['connection of learning to personal local and global situations by students'])],
                     ['Evaluation', generateList(parsedLessonPlan['evaluation and reflection on learning by students'])],
                     ['Assessment', generateList(parsedLessonPlan['assessment of learning by students'])]
                 ])
@@ -225,11 +254,11 @@ export const generatePDF = (parsedLessonPlan) => {
         }
     }
 
-    pdfMake.createPdf(docDefinition).download('sample.pdf');
+    pdfMake.createPdf(docDefinition).download(`${parsedLessonPlan['teacher name']} - ${parsedLessonPlan['lesson title']}, ${parsedLessonPlan['subject']}.pdf`);
 }
 
 // generatePDF(parseRawLessonPlan(sampleLessonPlan));
 
-export const updateLessonPlan = async (subject, topic, grade, detailLevel, duration, additionalPrompt) => {
-    return await generateLessonPlan(subject, topic, grade, detailLevel, duration, (additionalPrompt + '\nKeep this in mind while doing the following task.'))
+export const updateLessonPlan = async (subject, topic, grade, detailLevel, duration, additionalPrompt, region, curriculum, teacher) => {
+    return await generateLessonPlan(subject, topic, grade, detailLevel, duration, (additionalPrompt + '\nKeep this in mind while doing the following task.'), region, curriculum, teacher)
 }

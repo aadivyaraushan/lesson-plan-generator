@@ -1,11 +1,10 @@
 import "./globals.css";
-import { Inter } from "next/font/google";
 import "@fortawesome/fontawesome-svg-core/styles.css"
 import { config } from "@fortawesome/fontawesome-svg-core";
+import Head from "next/head";
 
 config.autoAddCss = false;
 
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "Create Next App",
@@ -19,6 +18,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+    <Head>
+      <title>LessonJS</title>
+    </Head>
       <body>{children}</body>
     </html>
   );
