@@ -270,7 +270,7 @@ export const updateLessonPlan = async (subject, topic, grade, detailLevel, durat
 
 export const generateDOCX = () => {
     const documentContent = fs.readFileSync(
-      path.resolve(path.dirname(process.argv[1]), 'tag-example.docx'),
+      path.resolve(path.dirname(process.argv[1]), 'template.docx'),
       "binary"
     )
 
@@ -293,7 +293,7 @@ export const generateDOCX = () => {
         compression: 'DEFLATE'
     });
 
-    fs.writeFileSync(path.resolve(path.dirname(process.argv[1]), 'output.docx'), buffer);
+    // fs.writeFileSync(path.resolve(path.dirname(process.argv[1]), 'output.docx'), buffer);
 }
 
 generateDOCX();

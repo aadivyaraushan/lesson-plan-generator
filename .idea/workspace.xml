@@ -5,13 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="defc8496-99d6-4017-9311-d8413bf5a7fc" name="Changes" comment="adds teacher name, region, curriculum to lesson plan generator and fixes some bugs">
-      <change afterPath="$PROJECT_DIR$/src/utils/tag-example.docx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/utils/lesson_plan_template.docx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/layout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/layout.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/utils/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/output.docx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/tag-example.docx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/~$g-example.docx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/~$output.docx" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,8 +42,8 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
     "git-widget-placeholder": "main",
-    "javascript.nodejs.core.library.configured.version": "20.3.0",
-    "javascript.nodejs.core.library.typings.version": "20.3.0",
+    "javascript.nodejs.core.library.configured.version": "18.16.0",
+    "javascript.nodejs.core.library.typings.version": "18.16.0",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -51,7 +51,7 @@
     "nodejs_package_manager_path": "npm",
     "prettierjs.PrettierConfiguration.Package": "/Users/aadivyaraushan/Documents/GitHub/lesson-plan-generator/node_modules/prettier",
     "settings.editor.selected.configurable": "actions.on.save",
-    "ts.external.directory.path": "/Applications/WebStorm.app/Contents/plugins/javascript-impl/jsLanguageServicesImpl/external",
+    "ts.external.directory.path": "/Users/aadivyaraushan/Documents/GitHub/lesson-plan-generator/node_modules/typescript/lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -76,6 +76,7 @@
       <workItem from="1686723544348" duration="7261000" />
       <workItem from="1686732388551" duration="11958000" />
       <workItem from="1687258681692" duration="1037000" />
+      <workItem from="1687278599870" duration="2660000" />
     </task>
     <task id="LOCAL-00001" summary="adds support for modifying lesson plan">
       <created>1686731418452</created>
