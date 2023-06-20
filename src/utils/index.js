@@ -1,10 +1,15 @@
 import {ChatOpenAI} from 'langchain/chat_models/openai'
 import {LLMChain} from 'langchain';
 import {SystemMessagePromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate} from "langchain/prompts";
-import * as pdfMake from 'pdfmake/build/pdfmake'
-import * as pdfFonts from 'pdfmake/build/vfs_fonts'
+// import * as pdfMake from 'pdfmake/build/pdfmake.js'
+// import * as pdfFonts from 'pdfmake/build/vfs_fonts.js'
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
+import fs from "fs";
+import path from 'path';
 
-pdfMake.vfs = pdfFonts.pdfMake.vfs;
+// pdfMake.vfs = pdfFonts.pdfMake.vfs;
+
 
 const model = new ChatOpenAI({temperature: 0.5, openAIApiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY});
 
@@ -172,93 +177,123 @@ const generateTableHeader = (text) => {
 
 }
 
-export const generatePDF = (parsedLessonPlan) => {
-
-    const sessionBySessionData = []
-    for (const key of Object.keys(parsedLessonPlan)) {
-        // console.log('key: ' + key)
-        if (key.startsWith('session ')) {
-            sessionBySessionData.push([key[0].toUpperCase() + key.slice(1), parsedLessonPlan[key]])
-        }
-    }
-    // console.log('session by session data: ' + sessionBySessionData);
-
-    const docDefinition = {
-        content: [
-            {text: parsedLessonPlan['lesson title'], style: 'header'},
-            {text: parsedLessonPlan['subject'], style: 'sub-header'},
-            {
-                layout: 'lightHorizontalLines',
-                table: createTable([
-                    ['Grade: ', parsedLessonPlan['grade']],
-                    ['Teacher: ', parsedLessonPlan['teacher name']],
-                    ['Key Vocabulary: ', generateList(parsedLessonPlan['key vocabulary'])],
-                    ['Materials: ', generateList(parsedLessonPlan['supporting materials and resources'])]
-                ])
-            },
-            generateTableHeader('Learning Outcomes'),
-            {
-                layout: 'lightHorizontalLines',
-                table: createTable([
-                    ['Knowledge: ', generateList(parsedLessonPlan['learning outcomes through knowledge'])],
-                    ['Skills: ', generateList(parsedLessonPlan['learning outcomes through skills'])],
-                    ['Understandings: ', generateList(parsedLessonPlan['learning outcomes through understandings'])]
-                ])
-            },
-            generateTableHeader('Modifications'),
-            {
-                layout: 'lightHorizontalLines',
-                table: createTable([
-                    ['Extra support', generateList(parsedLessonPlan['modifications for students who need extra support'])],
-                    ['Extra challenge', generateList(parsedLessonPlan['modifications for extra challenge'])]
-                ])
-            },
-            generateTableHeader('Learning procedure'),
-            {
-                layout: 'lightHorizontalLines',
-                table: createTable([
-                    ['Preparation', generateList(parsedLessonPlan['preparation of learning by students'])],
-                    ['Planning', generateList(parsedLessonPlan['planning of learning by students'])],
-                    ['Investigation', generateList(parsedLessonPlan['investigation for students to carry out to learn'])],
-                    ['Application', generateList(parsedLessonPlan['application of learning by students'])],
-                    ['Connection', generateList(parsedLessonPlan['connection of learning to personal local and global situations by students'])],
-                    ['Evaluation', generateList(parsedLessonPlan['evaluation and reflection on learning by students'])],
-                    ['Assessment', generateList(parsedLessonPlan['assessment of learning by students'])]
-                ])
-            },
-            generateTableHeader('Reflection'),
-            {text: 'Guiding questions for teachers to reflect'},
-            {text: generateList(parsedLessonPlan['guiding questions for educators to reflect on and improve their lesson'])},
-            generateTableHeader('Session-by-Session Breakdown'),
-            {
-                layout: 'lightHorizontalLines',
-                table: createTable(sessionBySessionData)
-            }
-        ],
-        defaultStyle: {
-            fontSize: 15,
-        },
-        styles: {
-            header: {
-                fontSize: 22,
-                bold: true
-            },
-            'sub-header': {
-                fontSize: 20,
-                bold: true
-            },
-            'sub-sub-header': {
-                fontSize: 18,
-                bold: true
-            }
-        }
-    }
-
-    pdfMake.createPdf(docDefinition).download(`${parsedLessonPlan['teacher name']} - ${parsedLessonPlan['lesson title']}, ${parsedLessonPlan['subject']}.pdf`);
-}
+// export const generatePDF = (parsedLessonPlan) => {
+//
+//     const sessionBySessionData = []
+//     for (const key of Object.keys(parsedLessonPlan)) {
+//         // console.log('key: ' + key)
+//         if (key.startsWith('session ')) {
+//             sessionBySessionData.push([key[0].toUpperCase() + key.slice(1), parsedLessonPlan[key]])
+//         }
+//     }
+//     // console.log('session by session data: ' + sessionBySessionData);
+//
+//     const docDefinition = {
+//         content: [
+//             {text: parsedLessonPlan['lesson title'], style: 'header'},
+//             {text: parsedLessonPlan['subject'], style: 'sub-header'},
+//             {
+//                 layout: 'lightHorizontalLines',
+//                 table: createTable([
+//                     ['Grade: ', parsedLessonPlan['grade']],
+//                     ['Teacher: ', parsedLessonPlan['teacher name']],
+//                     ['Key Vocabulary: ', generateList(parsedLessonPlan['key vocabulary'])],
+//                     ['Materials: ', generateList(parsedLessonPlan['supporting materials and resources'])]
+//                 ])
+//             },
+//             generateTableHeader('Learning Outcomes'),
+//             {
+//                 layout: 'lightHorizontalLines',
+//                 table: createTable([
+//                     ['Knowledge: ', generateList(parsedLessonPlan['learning outcomes through knowledge'])],
+//                     ['Skills: ', generateList(parsedLessonPlan['learning outcomes through skills'])],
+//                     ['Understandings: ', generateList(parsedLessonPlan['learning outcomes through understandings'])]
+//                 ])
+//             },
+//             generateTableHeader('Modifications'),
+//             {
+//                 layout: 'lightHorizontalLines',
+//                 table: createTable([
+//                     ['Extra support', generateList(parsedLessonPlan['modifications for students who need extra support'])],
+//                     ['Extra challenge', generateList(parsedLessonPlan['modifications for extra challenge'])]
+//                 ])
+//             },
+//             generateTableHeader('Learning procedure'),
+//             {
+//                 layout: 'lightHorizontalLines',
+//                 table: createTable([
+//                     ['Preparation', generateList(parsedLessonPlan['preparation of learning by students'])],
+//                     ['Planning', generateList(parsedLessonPlan['planning of learning by students'])],
+//                     ['Investigation', generateList(parsedLessonPlan['investigation for students to carry out to learn'])],
+//                     ['Application', generateList(parsedLessonPlan['application of learning by students'])],
+//                     ['Connection', generateList(parsedLessonPlan['connection of learning to personal local and global situations by students'])],
+//                     ['Evaluation', generateList(parsedLessonPlan['evaluation and reflection on learning by students'])],
+//                     ['Assessment', generateList(parsedLessonPlan['assessment of learning by students'])]
+//                 ])
+//             },
+//             generateTableHeader('Reflection'),
+//             {text: 'Guiding questions for teachers to reflect'},
+//             {text: generateList(parsedLessonPlan['guiding questions for educators to reflect on and improve their lesson'])},
+//             generateTableHeader('Session-by-Session Breakdown'),
+//             {
+//                 layout: 'lightHorizontalLines',
+//                 table: createTable(sessionBySessionData)
+//             }
+//         ],
+//         defaultStyle: {
+//             fontSize: 15,
+//         },
+//         styles: {
+//             header: {
+//                 fontSize: 22,
+//                 bold: true
+//             },
+//             'sub-header': {
+//                 fontSize: 20,
+//                 bold: true
+//             },
+//             'sub-sub-header': {
+//                 fontSize: 18,
+//                 bold: true
+//             }
+//         }
+//     }
+//
+//     pdfMake.createPdf(docDefinition).download(`${parsedLessonPlan['teacher name']} - ${parsedLessonPlan['lesson title']}, ${parsedLessonPlan['subject']}.pdf`);
+// }
 
 // generatePDF(parseRawLessonPlan(sampleLessonPlan));
 
 export const updateLessonPlan = async (subject, topic, grade, detailLevel, duration, additionalPrompt, region, curriculum, teacher) => {
     return await generateLessonPlan(subject, topic, grade, detailLevel, duration, (additionalPrompt + '\nKeep this in mind while doing the following task.'), region, curriculum, teacher)
 }
+
+export const generateDOCX = () => {
+    const documentContent = fs.readFileSync(
+      path.resolve(path.dirname(process.argv[1]), 'tag-example.docx'),
+      "binary"
+    )
+
+    const zip = new PizZip(documentContent);
+
+    const document = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true
+    });
+
+    document.render({
+        first_name: 'John',
+        last_name: 'Doe',
+        phone: '+971 56 106 6469',
+        description: 'Mogus'
+    });
+
+    const buffer = document.getZip().generate({
+        type: 'nodebuffer',
+        compression: 'DEFLATE'
+    });
+
+    fs.writeFileSync(path.resolve(path.dirname(process.argv[1]), 'output.docx'), buffer);
+}
+
+generateDOCX();

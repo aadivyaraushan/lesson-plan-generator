@@ -19,7 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
     <Head>
-      <title>LessonJS</title>
+      <title>LessonGPT</title>
     </Head>
       <body>{children}</body>
     </html>
