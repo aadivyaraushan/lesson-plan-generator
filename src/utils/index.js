@@ -1,17 +1,25 @@
-import {ChatOpenAI} from 'langchain/chat_models/openai'
-import {LLMChain} from 'langchain';
-import {SystemMessagePromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate} from "langchain/prompts";
+import { ChatOpenAI } from "langchain/chat_models/openai";
+import {
+  ChatPromptTemplate,
+  HumanMessagePromptTemplate,
+  SystemMessagePromptTemplate,
+} from "langchain/prompts";
 // import * as pdfMake from 'pdfmake/build/pdfmake.js'
 // import * as pdfFonts from 'pdfmake/build/vfs_fonts.js'
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
-import fs from "fs";
-import path from 'path';
+// import fs from "fs";
+import path from "path";
+import { z } from "zod";
+import { createExtractionChainFromZod } from "langchain/chains";
 
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
-
-const model = new ChatOpenAI({temperature: 0.5, openAIApiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY});
+const model = new ChatOpenAI({
+  modelName: "gpt-3.5-turbo-0613",
+  temperature: 0.5,
+  openAIApiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+});
 
 const lessonPromptTemplateText = `
 {additionalPrompt}
@@ -48,7 +56,7 @@ Include, in key/value pairs:
 - Evaluation and reflection on learning by students
 - Assessment of learning by students
 
-Example of commma-separated list: egg, bacon, socks
+Example of comma-separated list: egg, bacon, socks
 Avoid this when generating supporting materials and key vocabulary.
 
 Example of a sentence including colon: 
@@ -77,223 +85,181 @@ Ensure the plan is age-appropriate (by the grade given) and culturally relevant 
 Use examples based on the region throughout the lesson plan. Make sure that the plan is tailored for the region given.
 Keep in mind the curriculum and its objectives when generating.
 Ensure that the learning experiences are safe for learners.
-`
+`;
 
 const lessonPromptTemplate = ChatPromptTemplate.fromPromptMessages([
-    SystemMessagePromptTemplate.fromTemplate('You are a helpful assistant that generates lesson plans based on any given context and modifies lesson plans based on user input'),
-    HumanMessagePromptTemplate.fromTemplate(lessonPromptTemplateText)
-])
+  SystemMessagePromptTemplate.fromTemplate(
+    "You are a helpful assistant that generates lesson plans based on any given context and modifies lesson plans based on user input"
+  ),
+  HumanMessagePromptTemplate.fromTemplate(lessonPromptTemplateText),
+]);
 
+// const chain = new LLMChain({llm: model, prompt: lessonPromptTemplate});
+const chain = createExtractionChainFromZod(
+  z.object({
+    teacher_name: z.string(),
+    subject: z.string(),
+    chapter_title: z.string(),
+    grade: z.number(),
+    section: z.string(),
+    date: z.date(),
+    lesson_number: z.number(),
+    duration_in_minutes: z.number(),
+    learning_intention: z.string(),
+    learning_objective: z.string(),
+    success_criteria: z.string(),
+    reference_to_prior_learning: z.string(),
+    lesson_introduction: z.string(),
+    activity_one: z.string(),
+    assessment_one: z.string(),
+    activity_two: z.string(),
+    assessment_two: z.string(),
+    national_priorities_focus: z.string(),
+    MEP_integration: z.string(),
+    special_education_and_needs: z.string(),
+    critical_thinking_question: z.string(),
+    cross_curricular_link: z.string(),
+    resources: z.string(),
+    home_learning: z.string(),
+  }),
+  model
+);
 
-const chain = new LLMChain({llm: model, prompt: lessonPromptTemplate});
+export const generateLessonPlan = async (
+  teacher_name,
+  subject,
+  chapter_title,
+  grade,
+  section,
+  lesson_number,
+  learning_objectives,
+  duration,
+  curriculum
+) => {
+  // console.log('generateLessonPlan running')
+  // const response = await chain.call({subject, topic, grade, detailLevel, duration, additionalPrompt, region, curriculum, teacher})
+  // // console.log('response generated')
+  // return response.text;
+  const response = await chain.run(`
+    Generate a lesson plan, given that:
+    Teacher name: ${teacher_name} done
+    Subject: ${subject} done
+    Chapter title: ${chapter_title} done
+    Grade: ${grade} done
+    Section: ${section}  done
+    Number of lessons: ${lesson_number} done
+    Duration of a lesson: ${duration} done
+    Learning objectives in the syllabus: 
+    ${learning_objectives}
+    
+    
+    
+    Generate separate objects for each lesson and in the separate objects generate separately for each class the:
+    - Learning intention 
+    - Learning objective
+    - Success criteria (multiple points, make this an array)
+    - Reference to prior learning 
+    - Method of introduction
+    - First activity
+    - First assessment
+    - Second activity
+    - Second assessment
+    - Method to focus on national priorities of the United Arab Emirates
+    - Integration into Moral Education Programme
+    - Methods to assist students with special education needs
+    - Critical thinking question of the class
+    - Cross curricular links in the class
+    - Resources to use in the class
+    - Home learning for the class content
+    
+    Closely tailor the plans you generate to the requirements of the ${curriculum} curriculum.
+    `);
 
+  console.log(response);
+  return response;
+};
 
-export const generateLessonPlan = async (subject, topic, grade, detailLevel, duration, additionalPrompt='', region, curriculum, teacher) => {
-    // console.log('generateLessonPlan running')
-    const response = await chain.call({subject, topic, grade, detailLevel, duration, additionalPrompt, region, curriculum, teacher})
-    // console.log('response generated')
-    return response.text;
-}
+export const generateDOCX = (lessonPlan) => {
+  const {
+    teacher_name,
+    subject,
+    chapter_title,
+    grade,
+    section,
+    lesson_number,
+    duration_in_minutes,
+    learning_intention,
+    learning_objective,
+    success_criteria,
+    reference_to_prior_learning,
+    lesson_introduction,
+    activity_one,
+    assessment_one,
+    activity_two,
+    assessment_two,
+    national_priorities_focus,
+    MEP_integration,
+    special_education_and_needs,
+    critical_thinking_question,
+    cross_curricular_link,
+    resources,
+    home_learning,
+  } = lessonPlan;
 
-export const parseRawLessonPlan = (rawLessonPlan)=> {
+  const documentContent = fs.readFileSync(
+    path.resolve(path.dirname(process.argv[1]), "lesson_plan_template.docx"),
+    "binary"
+  );
 
-    const parsedLessonPlan  = {}
-    const planComponents = rawLessonPlan.split('\n')    ;
-    let currentKey = null;
-    console.log(rawLessonPlan);
+  const zip = new PizZip(documentContent);
 
-    for (let i = 0; i < planComponents.length; i++) {
-        const planComponent = planComponents[i]
-        if(planComponent === '')
-            continue
-        else {
-            const isKeyValueComponent = planComponent.includes(':');
-            const isListComponent = planComponent.startsWith('- ');
+  const document = new Docxtemplater(zip, {
+    paragraphLoop: true,
+    linebreaks: true,
+  });
 
-            if(isKeyValueComponent) {
-                let [key, value] = planComponent.split(':')
-                key = key.trim().toLowerCase().replace(',', '');
-                key = key.replace('- ', '')
-                value = value.trim()
-                parsedLessonPlan[key] = value;
-                currentKey = key;
-            }
-            else if(isListComponent && currentKey) {
-                const value = planComponent.replace('- ', '').trim();
+  document.setData({
+    teacher_name,
+    subject,
+    chapter_title,
+    grade,
+    section,
+    lesson_number,
+    duration_in_minutes,
+    learning_intention,
+    learning_objective,
+    success_criteria,
+    reference_to_prior_learning,
+    lesson_introduction,
+    activity_one,
+    assessment_one,
+    activity_two,
+    assessment_two,
+    national_priorities_focus,
+    MEP_integration,
+    special_education_and_needs,
+    critical_thinking_question,
+    cross_curricular_link,
+    resources,
+    home_learning,
+  });
 
-                if (!parsedLessonPlan[currentKey])
-                    parsedLessonPlan[currentKey] = []
+  const buffer = document.getZip().generate({
+    type: "nodebuffer",
+    compression: "DEFLATE",
+  });
 
-                if (typeof parsedLessonPlan[currentKey] != 'string') {
-                    // @ts-ignore
-                    parsedLessonPlan[currentKey].push(value)
-                } else {
-                    console.error('Error: parsedLessonPlan[currentKey] is single string, not array of strings. Current key is ' + currentKey);
+  try {
+    document.render();
+  } catch (e) {
+    console.error(`Error: ${e}`);
+  }
 
-                }
-            }
-        }
-    }
+  const output = document.getZip().generate({
+    type: "blob",
+    mimeType:
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  });
 
-    return parsedLessonPlan;
-}
-
-// (async () => {
-//     const rawLessonPlan = await generateLessonPlan('math', 'calculus', '11', 'high', '20 hours');
-//     console.log(rawLessonPlan)
-//     // console.log(parseRawLessonPlan(rawLessonPlan));
-// })()
-
-const createTable = (body) => {
-    return {
-        headerRows: 0,
-        widths: ['*', 'auto'],
-        body
-    }
-}
-
-function isIterable(obj) {
-    // checks for null and undefined
-    if (obj == null) {
-        return false;
-    }
-    return typeof obj[Symbol.iterator] === 'function';
-}
-
-const generateList = (array)  => {
-    let output = ''
-    // console.log('generating a list for ' + array);
-    if(!isIterable(array)) {
-        return '· ' + array;
-    }
-    for (let element of array) {
-        output += '· ' + element + '\n'
-    }
-    return output
-}
-
-const generateTableHeader = (text) => {
-    return { text, style: 'sub-sub-header'}
-
-}
-
-// export const generatePDF = (parsedLessonPlan) => {
-//
-//     const sessionBySessionData = []
-//     for (const key of Object.keys(parsedLessonPlan)) {
-//         // console.log('key: ' + key)
-//         if (key.startsWith('session ')) {
-//             sessionBySessionData.push([key[0].toUpperCase() + key.slice(1), parsedLessonPlan[key]])
-//         }
-//     }
-//     // console.log('session by session data: ' + sessionBySessionData);
-//
-//     const docDefinition = {
-//         content: [
-//             {text: parsedLessonPlan['lesson title'], style: 'header'},
-//             {text: parsedLessonPlan['subject'], style: 'sub-header'},
-//             {
-//                 layout: 'lightHorizontalLines',
-//                 table: createTable([
-//                     ['Grade: ', parsedLessonPlan['grade']],
-//                     ['Teacher: ', parsedLessonPlan['teacher name']],
-//                     ['Key Vocabulary: ', generateList(parsedLessonPlan['key vocabulary'])],
-//                     ['Materials: ', generateList(parsedLessonPlan['supporting materials and resources'])]
-//                 ])
-//             },
-//             generateTableHeader('Learning Outcomes'),
-//             {
-//                 layout: 'lightHorizontalLines',
-//                 table: createTable([
-//                     ['Knowledge: ', generateList(parsedLessonPlan['learning outcomes through knowledge'])],
-//                     ['Skills: ', generateList(parsedLessonPlan['learning outcomes through skills'])],
-//                     ['Understandings: ', generateList(parsedLessonPlan['learning outcomes through understandings'])]
-//                 ])
-//             },
-//             generateTableHeader('Modifications'),
-//             {
-//                 layout: 'lightHorizontalLines',
-//                 table: createTable([
-//                     ['Extra support', generateList(parsedLessonPlan['modifications for students who need extra support'])],
-//                     ['Extra challenge', generateList(parsedLessonPlan['modifications for extra challenge'])]
-//                 ])
-//             },
-//             generateTableHeader('Learning procedure'),
-//             {
-//                 layout: 'lightHorizontalLines',
-//                 table: createTable([
-//                     ['Preparation', generateList(parsedLessonPlan['preparation of learning by students'])],
-//                     ['Planning', generateList(parsedLessonPlan['planning of learning by students'])],
-//                     ['Investigation', generateList(parsedLessonPlan['investigation for students to carry out to learn'])],
-//                     ['Application', generateList(parsedLessonPlan['application of learning by students'])],
-//                     ['Connection', generateList(parsedLessonPlan['connection of learning to personal local and global situations by students'])],
-//                     ['Evaluation', generateList(parsedLessonPlan['evaluation and reflection on learning by students'])],
-//                     ['Assessment', generateList(parsedLessonPlan['assessment of learning by students'])]
-//                 ])
-//             },
-//             generateTableHeader('Reflection'),
-//             {text: 'Guiding questions for teachers to reflect'},
-//             {text: generateList(parsedLessonPlan['guiding questions for educators to reflect on and improve their lesson'])},
-//             generateTableHeader('Session-by-Session Breakdown'),
-//             {
-//                 layout: 'lightHorizontalLines',
-//                 table: createTable(sessionBySessionData)
-//             }
-//         ],
-//         defaultStyle: {
-//             fontSize: 15,
-//         },
-//         styles: {
-//             header: {
-//                 fontSize: 22,
-//                 bold: true
-//             },
-//             'sub-header': {
-//                 fontSize: 20,
-//                 bold: true
-//             },
-//             'sub-sub-header': {
-//                 fontSize: 18,
-//                 bold: true
-//             }
-//         }
-//     }
-//
-//     pdfMake.createPdf(docDefinition).download(`${parsedLessonPlan['teacher name']} - ${parsedLessonPlan['lesson title']}, ${parsedLessonPlan['subject']}.pdf`);
-// }
-
-// generatePDF(parseRawLessonPlan(sampleLessonPlan));
-
-export const updateLessonPlan = async (subject, topic, grade, detailLevel, duration, additionalPrompt, region, curriculum, teacher) => {
-    return await generateLessonPlan(subject, topic, grade, detailLevel, duration, (additionalPrompt + '\nKeep this in mind while doing the following task.'), region, curriculum, teacher)
-}
-
-export const generateDOCX = () => {
-    const documentContent = fs.readFileSync(
-      path.resolve(path.dirname(process.argv[1]), 'template.docx'),
-      "binary"
-    )
-
-    const zip = new PizZip(documentContent);
-
-    const document = new Docxtemplater(zip, {
-        paragraphLoop: true,
-        linebreaks: true
-    });
-
-    document.render({
-        first_name: 'John',
-        last_name: 'Doe',
-        phone: '+971 56 106 6469',
-        description: 'Mogus'
-    });
-
-    const buffer = document.getZip().generate({
-        type: 'nodebuffer',
-        compression: 'DEFLATE'
-    });
-
-    // fs.writeFileSync(path.resolve(path.dirname(process.argv[1]), 'output.docx'), buffer);
-}
-
-generateDOCX();
+  saveAs(output, `${teacher_name} - ${subject}, ${chapter_title}`);
+};

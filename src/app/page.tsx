@@ -8,23 +8,23 @@ import Head from 'next/head'
 
 export default function Home() {
   const textStyle = 'text-xl text-left';
-  const inputStyle = 'rounded-md text-black';
+  const inputStyle = 'p-1 rounded-md text-black';
   const containerStyle = 'mb-2';
 
   const [subject, setSubject] = useState('');
-  const [topic, setTopic] = useState('');
+  const [chapterTitle, setChapterTitle] = useState('');
   const [grade, setGrade] = useState<Number>();
+  const [section, setSection] = useState('');
   const [detail, setDetail] = useState<string>('high');
-  const [sessionNumber, setSessionNumber] = useState<Number>();
-  const [sessionDuration, setSessionDuration] = useState<Number>();
+  const [lessonsNumber, setLessonsNumber] = useState<Number>();
+  const [lessonsDuration, setLessonsDuration] = useState<Number>();
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [isGeneratedLessonPlan, setIsGeneratedLessonPlan] = useState<boolean>(false);
   const [lessonPlanUpdate, setLessonPlanUpdate] = useState<string>('');
   const [isLoadingGenerate, setIsLoadingGenerate] = useState<boolean>();
-  const [isLoadingModify, setIsLoadingModify] = useState<boolean>(false);
-  const [region, setRegion] = useState<string>('');
-  const [curriculum, setCurriculum] = useState<string>('');
-  const [teacher, setTeacher] = useState<string>('');
+  const [curriculum, setCurriculum] = useState('');
+  const [teacherName, setTeacherName] = useState<string>('');
+  const [learningObjectives, setLearningObjectives] = useState('');
 
   const onSubmit = async () => {
       // check if grade is >=1 and <= 12
@@ -37,36 +37,26 @@ export default function Home() {
         return;
       }
 
-      if (sessionDuration <= 0) {
+      if (lessonsDuration <= 0) {
         setErrorMessage('Duration cannot be 0/negative. Please enter some valid duration.')
         return;
       }
 
-      if (sessionNumber <= 0) {
+      if (lessonsNumber <= 0) {
         setErrorMessage('Number of sessions cannot be 0/negative. Please enter some valid number of sessions.')
         return;
       }
 
 
       setIsLoadingGenerate(true);
-      const lessonPlan = await generateLessonPlan(subject, topic, String(grade), detail, `${sessionNumber} sessions for ${sessionDuration} minutes each`, '', region, curriculum, teacher);
-      // console.log(lessonPlan);
-      const parsedLessonPlan = parseRawLessonPlan(lessonPlan);
+      const lessonPlan = await generateLessonPlan(teacherName, subject, chapterTitle, grade, section, lessonsNumber, learningObjectives, lessonsDuration, curriculum);
+      console.log(lessonPlan);
+      // const parsedLessonPlan = parseRawLessonPlan(lessonPlan);
       // console.log(parsedLessonPlan);
-      generatePDF(parsedLessonPlan);
+      // generatePDF(parsedLessonPlan);
       setIsGeneratedLessonPlan(true);
       setIsLoadingGenerate(false);
 
-  }
-
-  const onSubmitModifications = async () => {
-    setIsLoadingModify(true);
-    const lessonPlan = await updateLessonPlan(subject, topic, grade, detail, `${sessionNumber} sessions for ${sessionDuration} minutes each`, lessonPlanUpdate, region, curriculum, teacher)
-    // console.log(lessonPlan)
-    const parsedLessonPlan = parseRawLessonPlan(lessonPlan);
-    // console.log(parsedLessonPlan);
-    generatePDF(parsedLessonPlan);
-    setIsLoadingModify(false);
   }
 
   return (
@@ -91,46 +81,40 @@ export default function Home() {
               <input className={inputStyle} value={subject} onChange={(e) => setSubject(e.target.value)}/>
           </div>
           <div className={containerStyle}>
-              <p className={textStyle}>Topic: </p>
-              <input className={inputStyle} value={topic} onChange={(e) => setTopic(e.target.value)}/>
-          </div>
-          <div className={containerStyle}>
-            <p className={textStyle}>Region: </p>
-            <input className={inputStyle} value={region} onChange={(e) => setRegion(e.target.value)}/>
+              <p className={textStyle}>Chapter: </p>
+              <input className={inputStyle} value={chapterTitle} onChange={(e) => setChapterTitle(e.target.value)}/>
           </div>
           <div className={containerStyle}>
             <p className={textStyle}>Curriculum: </p>
             <input className={inputStyle} value={curriculum} onChange={(e) => setCurriculum(e.target.value)}/>
           </div>
-        <div className={containerStyle}>
-          <p className={textStyle}>Teacher: </p>
-          <input className={inputStyle} value={teacher} onChange={(e) => setTeacher(e.target.value)}/>
-        </div>
+          <div className={containerStyle}>
+            <p className={textStyle}>Teacher: </p>
+            <input className={inputStyle} value={teacherName} onChange={(e) => setTeacherName(e.target.value)}/>
+          </div>
           <div className={containerStyle}>
               <p className={textStyle}>Grade: </p>
             <div className='flex '>
               <input className={inputStyle} type={'range'} min={1} max={12} onChange={(e) => setGrade(Number(e.target.value))}/>
               <p className={'text-md ml-2'}>{grade}</p>
             </div>
-
-
           </div>
           <div className={containerStyle}>
-              <p className={textStyle}>Detail/Depth: </p>
-              <select name='detail-level' id='detailLevel' className={inputStyle} value={detail} onChange={(e) => setDetail(e.target.value)}>
-                  <option value='high'>High</option>
-                  <option value='medium'>Medium</option>
-                  <option value='low'>Low</option>
-              </select>
+            <p className={textStyle}>Section: </p>
+            <input className={inputStyle} value={section} onChange={(e) => setSection(e.target.value)}/>
           </div>
           <div className={containerStyle}>
-              <p className={textStyle}>Duration of a session (in minutes): </p>
-              <input className={inputStyle} type={'number'} value={String(sessionDuration)} onChange={(e) => setSessionDuration(Number(e.target.value))}/>
+              <p className={textStyle}>Duration of a lesson (in minutes): </p>
+              <input className={inputStyle} type={'number'} value={String(lessonsDuration)} onChange={(e) => setLessonsDuration(Number(e.target.value))}/>
           </div>
-          <div className={containerStyle}>
-              <p className={textStyle}>Number of sessions: </p>
-              <input className={inputStyle} type={'number'} value={String(sessionNumber)} onChange={(e) => setSessionNumber(Number(e.target.value))}/>
-          </div>
+        <div className={containerStyle}>
+          <p className={textStyle}>Number of sessions: </p>
+          <input className={inputStyle} type={'number'} value={String(lessonsNumber)} onChange={(e) => setLessonsNumber(Number(e.target.value))}/>
+        </div>
+        <div className={containerStyle}>
+          <p className={textStyle}>Learning objectives in the syllabus: </p>
+          <textarea rows={10} cols={20} name='learning_objectives' value={learningObjectives} onChange={e => setLearningObjectives(e.target.value)} className={inputStyle} />
+        </div>
         <div className='flex items-center'>
           <button onClick={onSubmit} className='bg-white text-black p-2 rounded-xl'>Generate Lesson Plan</button>
           {isLoadingGenerate &&
@@ -149,23 +133,6 @@ export default function Home() {
                 <p className='hover:cursor-pointer' onClick={() => setErrorMessage('')}>X</p>
                   <p>{errorMessage}</p>
               </div>
-          )}
-          {isGeneratedLessonPlan && (
-            <>
-              <div className='flex'>
-                <input placeholder={'Write instructions for improvements'} type={'text'} className={'mt-2 p-2 bg-white text-black w-full rounded-xl'} value={lessonPlanUpdate} onChange={e => setLessonPlanUpdate(e.target.value)}/>
-                  <FontAwesomeIcon onClick={onSubmitModifications} icon={faArrowAltCircleRight} className={'mt-2 ml-2 text-4xl '} />
-              </div>
-            {isLoadingModify &&
-              <div
-              className="inline-block ml-2 h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"
-              role="status">
-              <span
-              className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]"
-              >Loading...
-              </span>
-              </div>}
-            </>
           )}
       </div>
     </main>
