@@ -8,10 +8,11 @@ import {
 // import * as pdfFonts from 'pdfmake/build/vfs_fonts.js'
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
-// import fs from "fs";
-import path from "path";
 import { z } from "zod";
 import { createExtractionChainFromZod } from "langchain/chains";
+import { Amplify, Storage } from "aws-amplify";
+import awsmobile from "../aws-exports.js";
+Amplify.configure(awsmobile);
 
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
 
@@ -179,7 +180,7 @@ export const generateLessonPlan = async (
   return response;
 };
 
-export const generateDOCX = (lessonPlan) => {
+export const generateDOCX = async (lessonPlan) => {
   const {
     teacher_name,
     subject,
@@ -206,10 +207,13 @@ export const generateDOCX = (lessonPlan) => {
     home_learning,
   } = lessonPlan;
 
-  const documentContent = fs.readFileSync(
-    path.resolve(path.dirname(process.argv[1]), "lesson_plan_template.docx"),
-    "binary"
-  );
+  // const documentContent = fs.readFileSync(
+  //   path.resolve(path.dirname(process.argv[1]), "lesson_plan_template.docx"),
+  //   "binary"
+  // );
+
+  const documentRaw = await Storage.get("lesson_plan_template.docx");
+  const documentContent = documentRaw.Body;
 
   const zip = new PizZip(documentContent);
 

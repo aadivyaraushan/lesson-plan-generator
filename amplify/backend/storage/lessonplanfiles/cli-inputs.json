@@ -1,0 +1,12 @@
+{
+  "resourceName": "lessonplanfiles",
+  "policyUUID": "fee0e82b",
+  "bucketName": "lessonplangenerator9da31051b52f44559f4b558777a9",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "READ"
+  ],
+  "triggerFunction": "NONE",
+  "groupAccess": {}
+}
