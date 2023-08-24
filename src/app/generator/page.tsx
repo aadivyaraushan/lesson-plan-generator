@@ -39,6 +39,8 @@ export default function Generator() {
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [lessonPlanUpdate, setLessonPlanUpdate] = useState<string>('');
   const [isLoadingGenerate, setIsLoadingGenerate] = useState<boolean>(false);
+  const [previousCoveredContent, setPreviousCoveredContent] =
+    useState<string>('');
 
   const [learningObjectives, setLearningObjectives] = useState('');
   const [learningObjectivesImage, setLearningObjectivesImage] =
@@ -51,7 +53,7 @@ export default function Generator() {
     useState<boolean>(false);
 
   useEffect(() => {
-    console.log(learningObjectives);
+    // console.log(learningObjectives);
   }, [learningObjectives]);
   // @ts-ignore
   const onSubmit = async (event) => {
@@ -88,27 +90,9 @@ export default function Generator() {
       moralEducationObjectives,
       lessonsDuration,
       curriculum,
-      includesTeacherStudentSplit
+      includesTeacherStudentSplit,
+      previousCoveredContent
     );
-    // const [lessonPlans, lessonPlansRaw] = await generateLessonPlan(
-    //   'Kurt Godel',
-    //   'Mathematics',
-    //   'Simultaneous Linear Equations',
-    //   9,
-    //   'H',
-    //   1,
-    //   `Simultaneous Linear
-    // Equations
-    // Determine solution to the simultaneous
-    // linear equations.
-    // • Simultaneous Linear Equations in two variables. (With numerical coefficients only)
-    // • Solving simultaneous linear equations algebraically by: Elimination, Substitution and Cross Multiplication method
-    // • Solving simple problems by framing appropriate equations.`,
-    //   '',
-    //   50,
-    //   'ICSE',
-    //   includesTeacherStudentSplit
-    // );
     let nestedUrls: Array<Array<string>> = [];
     if (includesWebsites) {
       nestedUrls = await generateURLsFromLessonPlan(
@@ -120,7 +104,7 @@ export default function Generator() {
         nestedUrls.push(['', '', '', '', '', '', '']);
       }
     }
-
+    // console.log(nestedUrls);
     await generateDOCX(lessonPlans, nestedUrls);
     setIsLoadingGenerate(false);
   };
@@ -206,6 +190,14 @@ export default function Generator() {
               type={'number'}
               value={String(lessonsNumber)}
               onChange={(e) => setLessonsNumber(Number(e.target.value))}
+            />
+          </div>
+          <div className={containerStyle}>
+            <p className={textStyle}>Previously covered content: </p>
+            <input
+              className={inputStyle}
+              value={previousCoveredContent}
+              onChange={(e) => setPreviousCoveredContent(e.target.value)}
             />
           </div>
           <ObjectivesUpload
