@@ -129,7 +129,7 @@ export default function Generator() {
             />
           </div>
           <div className={containerStyle}>
-            <p className={textStyle}>Chapter: </p>
+            <p className={textStyle}>Topic/Unit: </p>
             <input
               className={inputStyle}
               value={chapterTitle}
@@ -143,9 +143,11 @@ export default function Generator() {
               value={curriculum}
               onChange={(e) => setCurriculum(e.target.value)}
             />
+            { // PYP MYP DP ICSE ISC
+            }
           </div>
           <div className={containerStyle}>
-            <p className={textStyle}>Teacher: </p>
+            <p className={textStyle}>Teacher name: </p>
             <input
               className={inputStyle}
               value={teacherName}
@@ -184,7 +186,7 @@ export default function Generator() {
             />
           </div>
           <div className={containerStyle}>
-            <p className={textStyle}>Number of sessions: </p>
+            <p className={textStyle}>Total number of periods: </p>
             <input
               className={inputStyle}
               type={'number'}
@@ -193,7 +195,7 @@ export default function Generator() {
             />
           </div>
           <div className={containerStyle}>
-            <p className={textStyle}>Previously covered content: </p>
+            <p className={textStyle}>Prior relevant learning (list a topic / sub-topic linked to the current topic): </p>
             <input
               className={inputStyle}
               value={previousCoveredContent}
