@@ -41,7 +41,7 @@ export default function Generator() {
   const [isLoadingGenerate, setIsLoadingGenerate] = useState<boolean>(false);
   const [previousCoveredContent, setPreviousCoveredContent] =
     useState<string>('');
-
+  const [learningIntention, setLearningIntention] = useState<string>('');
   const [learningObjectives, setLearningObjectives] = useState('');
   const [learningObjectivesImage, setLearningObjectivesImage] =
     useState<File>();
@@ -51,6 +51,7 @@ export default function Generator() {
   const [includesWebsites, setIncludesWebsites] = useState<boolean>(false);
   const [includesTeacherStudentSplit, setIncludesTeacherStudentSplit] =
     useState<boolean>(false);
+  const [learningIntentionImage, setLearningIntentionImage] = useState<File>();
 
   useEffect(() => {
     // console.log(learningObjectives);
@@ -78,7 +79,7 @@ export default function Generator() {
       return;
     }
     setIsLoadingGenerate(true);
-
+    console.log(includesTeacherStudentSplit);
     const [lessonPlans, lessonPlansRaw] = await generateLessonPlan(
       teacherName,
       subject,
@@ -87,6 +88,7 @@ export default function Generator() {
       section,
       lessonsNumber,
       learningObjectives,
+      learningIntention,
       moralEducationObjectives,
       lessonsDuration,
       curriculum,
@@ -143,7 +145,8 @@ export default function Generator() {
               value={curriculum}
               onChange={(e) => setCurriculum(e.target.value)}
             />
-            { // PYP MYP DP ICSE ISC
+            {
+              // PYP MYP DP ICSE ISC
             }
           </div>
           <div className={containerStyle}>
@@ -195,11 +198,22 @@ export default function Generator() {
             />
           </div>
           <div className={containerStyle}>
-            <p className={textStyle}>Prior relevant learning (list a topic / sub-topic linked to the current topic): </p>
+            <p className={textStyle}>Prior relevant learning : </p>
+            <p className={' text-xs'}>
+              (list a topic / sub-topic linked to the current topic)
+            </p>
             <input
               className={inputStyle}
               value={previousCoveredContent}
               onChange={(e) => setPreviousCoveredContent(e.target.value)}
+            />
+          </div>
+          <div className={containerStyle}>
+            <p className={textStyle}>Learning intention in the syllabus: </p>
+            <input
+              className={inputStyle}
+              value={learningIntention}
+              onChange={(e) => setLearningIntention(e.target.value)}
             />
           </div>
           <ObjectivesUpload

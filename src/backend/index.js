@@ -81,7 +81,7 @@ Follow all of the following guidelines:
   6. Second assessment
   7. Home learning
 3. Do not repeat the activity you are generating a query for in the query. For example:
-  - If the activity is "Method of introducing the lesson with teacher-student involvement split percentage: Teacher will present the poem "The Princess and the Gypsies" to the class, providing background information and context.", do not generate a query like "introducing the lesson" instead generate a query that actually helps the teacher introduce the lesson like a query to find the poem: "the princess and the gypsies full poem online".
+  - If the activity is "Method of introducing the lesson: Teacher will present the poem "The Princess and the Gypsies" to the class, providing background information and context.", do not generate a query like "introducing the lesson" instead generate a query that actually helps the teacher introduce the lesson like a query to find the poem: "the princess and the gypsies full poem online".
 4. You do not need to generate queries for every activity given above. Generate queries only if you think any resources from the internet are necessary to do that activity. If no resources are required then just generate an empty string.
 5. Do not generate more than 1 query for each of the above sections of the lesson plan.
 6. Generate the search queries for each section in the order given by the numbered list above.
@@ -123,12 +123,12 @@ const parsingChain = createExtractionChainFromZod(
     learning_intention: z.string().min(1),
     learning_objective: z.string().min(1),
     success_criteria: z.string().min(1),
-    reference_to_prior_learning_with_teacher_student_split: z.string().min(1),
-    lesson_introduction_with_teacher_student_split: z.string().min(1),
-    activity_one_with_teacher_student_split: z.string().min(1),
-    assessment_one_with_teacher_student_split: z.string().min(1),
-    activity_two_with_teacher_student_split: z.string().min(1),
-    assessment_two_with_teacher_student_split: z.string().min(1),
+    reference_to_prior_learning: z.string().min(1),
+    lesson_introduction: z.string().min(1),
+    activity_one: z.string().min(1),
+    assessment_one: z.string().min(1),
+    activity_two: z.string().min(1),
+    assessment_two: z.string().min(1),
     moral_education_programme_integration: z.string().min(1),
     special_education_and_needs: z.string().min(1),
     critical_thinking_question: z.string().min(1),
@@ -198,6 +198,7 @@ export const generateLessonPlan = async (
   section,
   lesson_number,
   learning_objectives,
+  learning_intention,
   moral_education_objectives,
   duration,
   curriculum,
@@ -214,6 +215,7 @@ Section: {section}
 Curriculum: {curriculum}
 Number of lessons: {lesson_number}
 Duration of a lesson: {duration} minutes
+Learning intention in the syllabus: {learning_intention}
 Learning objectives in the syllabus: 
 {learning_objectives}
 Moral Education Objectives:
@@ -258,8 +260,7 @@ Follow the following guidelines when generating the lesson plan:
 9. Generate the "Method to link back to prior learning" for the first lesson plan based on the content covered previously given above ({previous_covered_content}). For the lesson plans after the first lesson plan, generate the method to link back to prior learning based on the prior lesson plans.
 ${
   includesTeacherStudentSplit
-    ? `
-10. Include the teacher-student involvement split percentage in brackets at the end of the description of the method to link back to prior lessons, method to introduce the lesson, first activity, first assessment, second activity and second assessment. 
+    ? `10. Generate the teacher-student involvement split percentage in brackets for placement at the end of the description of the method to link back to prior lessons, method to introduce the lesson, first activity, first assessment, second activity and second assessment. The teacher-student involvement split percentage is a percentage that tells how much percent of the activity a teacher must be involved in and how much percent of the activity a student must be involved in.
     - For example, an activity with brackets might like: "Experiment to determine relationship between resistivity and length (70% student-led, 30% teacher-led)".
 `
     : ''
@@ -273,6 +274,8 @@ Extra context on the terms that may be used:
 4. ICSE is an Indian syllabus where greater emphasis is placed on learning from a textbook, a strict syllabus and end-of-year exams.
 5. MYP is an international syllabus where greater emphasis is placed on research-centric learning, project-based learning/assessment and international mindedness.
 `;
+
+  // console.log(lessonPromptTemplateText);
   const lessonPromptTemplate = ChatPromptTemplate.fromPromptMessages([
     SystemMessagePromptTemplate.fromTemplate(
       'You are a helpful assistant that generates lesson plans based on any given context. You always generate as many lesson plans as you are asked to (never less lesson plans than you are asked to). You generate the lesson plans in declarative future tense, not in an imperative way. For example, instead of saying "Show students a large number written on the board and ask them to identify the place value and face value of a specific digit." say "Teachers will show students a large number written on the board and ask them to identify the place value and face value of a specific digit."'
@@ -289,14 +292,16 @@ Extra context on the terms that may be used:
     section,
     lesson_number,
     learning_objectives,
+    learning_intention,
     moral_education_objectives,
     duration,
     curriculum,
     previous_covered_content,
   });
-  // console.log('generated raw response');
+  console.log('generated raw response');
+  // console.log(rawResponse);
   const JSONResponse = await parsingChain.run(rawResponse.text);
-  // JSONResponse['stringResponse'] = rawResponse.text;
+  JSONResponse['stringResponse'] = rawResponse.text;
   // console.log(JSONResponse);
   return [JSONResponse, rawResponse.text];
 };
@@ -347,13 +352,12 @@ export const generateDOCX = async (
       learning_intention,
       learning_objective,
       success_criteria,
-      reference_to_prior_learning_with_teacher_student_split:
-        reference_to_prior_learning,
-      lesson_introduction_with_teacher_student_split: lesson_introduction,
-      activity_one_with_teacher_student_split: activity_one,
-      assessment_one_with_teacher_student_split: assessment_one,
-      activity_two_with_teacher_student_split: activity_two,
-      assessment_two_with_teacher_student_split: assessment_two,
+      reference_to_prior_learning,
+      lesson_introduction,
+      activity_one,
+      assessment_one,
+      activity_two,
+      assessment_two,
       special_education_and_needs,
       critical_thinking_question,
       cross_curricular_link,
