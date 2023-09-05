@@ -17,7 +17,7 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <Head>
-        <title>LessonGPT</title>
+        <title>Lesson plan generator</title>
       </Head>
       <body>{children}</body>
     </html>

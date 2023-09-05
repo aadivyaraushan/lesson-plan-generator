@@ -36,6 +36,7 @@ const Page = () => {
   return (
     <main className="flex min-h-screen w-full flex-col items-center justify-center p-24">
       <h1 className="text-4xl font-medium mr-12">Sign up</h1>
+      <p className="text-xs mr-12">If you've already made an account, please log in instead.</p>
       <div className="flex flex-col justify-evenly items-end mr-12 w-1/2">
         <div>
           <label htmlFor={"email"} className={"mt-2 text-xl "}>
