@@ -21,8 +21,8 @@ import { createExtractionChainFromZod } from 'langchain/chains';
 import { StructuredOutputParser } from 'langchain/output_parsers';
 
 export const getData = async () => {
-  const drive = google.drive({version: 'v3', auth});
-  try { 
+  const drive = google.drive({ version: 'v3', auth });
+  try {
     const res = await drive.files.list();
     const files = res.data.files;
 
@@ -31,7 +31,7 @@ export const getData = async () => {
     console.error('Error fetching files: ', error);
     return null;
   }
-}
+};
 
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
 const model = new ChatOpenAI({
@@ -310,11 +310,12 @@ Extra context on the terms that may be used:
     curriculum,
     previous_covered_content,
   });
-  // console.log('generated raw response');
-  // console.log(rawResponse);
+  console.log('generated raw response');
+  console.log(rawResponse.text);
   const JSONResponse = await parsingChain.run(rawResponse.text);
   JSONResponse['stringResponse'] = rawResponse.text;
-  // console.log(JSONResponse);
+  console.log('generated json response');
+  console.log(JSONResponse);
   return [JSONResponse, rawResponse.text];
 };
 
@@ -328,13 +329,18 @@ export const generateURLsFromLessonPlan = async (lessonPlansRaw, number) => {
   });
   // console.log('Input: \n' + input);
   const queries = await noChatModel.call(input);
+  console.log('queries generated');
   // console.log(queries);
   let queries_parsed = await arrayParser.parse(queries);
-  // console.log(queries_parsed);
+  console.log('queries parsed');
+  console.log(queries_parsed);
   for (let one_lesson_queries of queries_parsed) {
     const urls = await generateURLsFromQueries(one_lesson_queries);
+    console.log('urls generated for a lesson');
     nestedURLs.push(urls);
   }
+  console.log('urls generated for all lessons');
+  console.log(nestedURLs);
   return nestedURLs;
 };
 
@@ -345,13 +351,13 @@ export const generateDOCX = async (
   urlsNested,
   templateInBytes
 ) => {
-  // console.log('generateDOCX running');
+  console.log('generateDOCX running');
   // console.log(lessonPlans);
   // console.log(lessonPlans.length);
   let lessonPlanDocuments = [];
 
   for (let i = 1; i <= lessonPlans.length; i++) {
-    // console.log('inner loop running');
+    console.log('inner loop running');
 
     const {
       teacher_name,
@@ -380,7 +386,7 @@ export const generateDOCX = async (
       low_order_questions,
       moral_education_programme_integration: MEP_integration,
     } = lessonPlans[i - 1];
-    // console.log('extracted relevant inrmation, generating document bytes');
+    console.log('extracted relevant information, generating document bytes');
     // console.log(teacher_name, subject, chapter_title, i);
     // console.log(activity_one);
     const urls = urlsNested[i - 1];
@@ -397,14 +403,18 @@ export const generateDOCX = async (
     // const lessonPlanTemplateFile = data[0]
     // const templateInBytes = await lessonPlanTemplateFile.downloadBuffer();
     const storage = getStorage();
-    const pathReference = ref(storage, '/lesson_plan_template.docx')
+    console.log('logged in for storage');
+    const pathReference = ref(storage, '/lesson_plan_template.docx');
     const templateInBytes = await getBytes(pathReference);
+    console.log('generated template bytes');
     // console.log(templateInBytes);
     const zip = new PizZip(templateInBytes);
+    console.log('generated pizzip file');
     const document = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
     });
+    console.log('generated document file using docxtemplater');
     // console.log('docx document generated');
     // console.log('now setting document data');
 
@@ -441,11 +451,11 @@ export const generateDOCX = async (
       low_order_questions,
     });
 
-    // console.log('document data set, now trying to render document');
+    console.log('document data set, now trying to render document');
 
     try {
       document.render();
-      // console.log('document rendered');
+      console.log('document rendered');
 
       const generatedLessonPlanDocx = document.getZip().generate({
         type: 'blob',
@@ -453,7 +463,7 @@ export const generateDOCX = async (
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       });
 
-      // console.log('docx generated');
+      console.log('docx generated');
 
       lessonPlanDocuments.push(generatedLessonPlanDocx);
 
