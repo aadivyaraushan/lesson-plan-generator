@@ -79,7 +79,7 @@ export default function Generator() {
       return;
     }
     setIsLoadingGenerate(true);
-    console.log(includesTeacherStudentSplit);
+    // console.log(includesTeacherStudentSplit);
     const [lessonPlans, lessonPlansRaw] = await generateLessonPlan(
       teacherName,
       subject,
@@ -284,7 +284,7 @@ export default function Generator() {
           </div>
 
           {errorMessage.length > 0 && (
-            <div className='bg-red-300 p-4 rounded-xl text-white'>
+            <div className='bg-red-500 p-4 rounded-xl text-white'>
               <p
                 className='hover:cursor-pointer'
                 onClick={() => setErrorMessage('')}

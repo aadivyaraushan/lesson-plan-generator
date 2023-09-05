@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation.js';
 const LogIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
   const router = useRouter();
 
   const onSubmitLogIn = async () => {
@@ -21,6 +22,10 @@ const LogIn = () => {
       router.push('/generator');
     } catch (e) {
       console.error('Error: ' + e.message);
+      setErrorMessage(
+        e.message
+          .replace("Firebase: ", "")
+      );    
     }
   };
 
@@ -62,6 +67,19 @@ const LogIn = () => {
               Log In
             </button>
           </div>
+          {errorMessage !== '' && (
+            <div className={'flex rounded-md bg-red-500 w-full items-center justify-center'}>
+              <p
+                className='hover:cursor-pointer mr-5'
+                onClick={() => setErrorMessage('')}
+              >
+                X
+              </p>
+              <p>{errorMessage}</p>
+            </div>
+          )}
+
+
         </div>
       </main>
     </div>

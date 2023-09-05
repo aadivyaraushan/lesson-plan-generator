@@ -14,7 +14,7 @@ const ObjectivesUpload = ({
   setErrorMessage,
 }) => {
   useEffect(() => {
-    console.log('image: ', image);
+    // console.log('image: ', image);
     const generateImageTextFromImage = async () => {
       if (image?.type.slice(0, 5) === 'image') {
         const tempText = await generateTextFromImage(image);

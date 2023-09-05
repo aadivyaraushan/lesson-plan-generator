@@ -190,7 +190,7 @@ const generateURLsFromQueries = async (queries) => {
         method: 'GET',
       });
       const data = await response.json();
-      console.log(data);
+      // console.log(data);
       // URLs.push(data.organic_results[0].link);
       URLs.push(data.result.organic_results[0].url);
     } catch (error) {
@@ -310,11 +310,11 @@ Extra context on the terms that may be used:
     curriculum,
     previous_covered_content,
   });
-  console.log('generated raw response');
+  // console.log('generated raw response');
   // console.log(rawResponse);
   const JSONResponse = await parsingChain.run(rawResponse.text);
   JSONResponse['stringResponse'] = rawResponse.text;
-  console.log(JSONResponse);
+  // console.log(JSONResponse);
   return [JSONResponse, rawResponse.text];
 };
 
@@ -326,11 +326,11 @@ export const generateURLsFromLessonPlan = async (lessonPlansRaw, number) => {
     format_instructions,
     number,
   });
-  console.log('Input: \n' + input);
+  // console.log('Input: \n' + input);
   const queries = await noChatModel.call(input);
-  console.log(queries);
+  // console.log(queries);
   let queries_parsed = await arrayParser.parse(queries);
-  console.log(queries_parsed);
+  // console.log(queries_parsed);
   for (let one_lesson_queries of queries_parsed) {
     const urls = await generateURLsFromQueries(one_lesson_queries);
     nestedURLs.push(urls);
@@ -345,13 +345,13 @@ export const generateDOCX = async (
   urlsNested,
   templateInBytes
 ) => {
-  console.log('generateDOCX running');
+  // console.log('generateDOCX running');
   // console.log(lessonPlans);
   // console.log(lessonPlans.length);
   let lessonPlanDocuments = [];
 
   for (let i = 1; i <= lessonPlans.length; i++) {
-    console.log('inner loop running');
+    // console.log('inner loop running');
 
     const {
       teacher_name,
@@ -380,7 +380,7 @@ export const generateDOCX = async (
       low_order_questions,
       moral_education_programme_integration: MEP_integration,
     } = lessonPlans[i - 1];
-    console.log('extracted relevant inrmation, generating document bytes');
+    // console.log('extracted relevant inrmation, generating document bytes');
     // console.log(teacher_name, subject, chapter_title, i);
     // console.log(activity_one);
     const urls = urlsNested[i - 1];
@@ -399,14 +399,14 @@ export const generateDOCX = async (
     const storage = getStorage();
     const pathReference = ref(storage, '/lesson_plan_template.docx')
     const templateInBytes = await getBytes(pathReference);
-    console.log(templateInBytes);
+    // console.log(templateInBytes);
     const zip = new PizZip(templateInBytes);
     const document = new Docxtemplater(zip, {
       paragraphLoop: true,
       linebreaks: true,
     });
-    console.log('docx document generated');
-    console.log('now setting document data');
+    // console.log('docx document generated');
+    // console.log('now setting document data');
 
     document.setData({
       teacher_name,
@@ -441,7 +441,7 @@ export const generateDOCX = async (
       low_order_questions,
     });
 
-    console.log('document data set, now trying to render document');
+    // console.log('document data set, now trying to render document');
 
     try {
       document.render();

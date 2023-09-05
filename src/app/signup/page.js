@@ -12,7 +12,6 @@ const Page = () => {
 
   const onSubmitSignUp = async () => {
     const auth = getAuth(app);
-    setErrorMessage("");
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -20,16 +19,14 @@ const Page = () => {
         password
       );
       const user = userCredential.user;
-      console.log(user);
+      // console.log(user);
       router.push("/generator");
     } catch (error) {
-      if (error.code === "auth/weak-password") {
-        setErrorMessage(
-          error.message
-            .replace("Firebase: ", "")
-            .replace("(auth/weak-password).", "")
-        );
-      }
+      console.error(error.message);
+      setErrorMessage(
+        error.message
+          .replace("Firebase: ", "")
+      );
     }
   };
 
@@ -70,9 +67,17 @@ const Page = () => {
             Sign Up
           </button>
         </div>
-        {errorMessage !== "" && (
-          <div className="bg-red-500 p-2 rounded-xl w-fit">{errorMessage}</div>
-        )}
+        {errorMessage != '' && (
+            <div className={'flex rounded-md bg-red-500 w-full items-center justify-center'}>
+              <p
+                className='hover:cursor-pointer mr-5'
+                onClick={() => setErrorMessage('')}
+              >
+                X
+              </p>
+              <p>{errorMessage}</p>
+            </div>
+          )}
       </div>
     </main>
   );
