@@ -1,6 +1,10 @@
 'use client';
 import React, { useState, createContext, useContext } from 'react';
-import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import {
+  getAuth,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+} from 'firebase/auth';
 import { app } from '../../backend/firebase.js';
 import { useRouter } from 'next/navigation.js';
 
@@ -8,6 +12,7 @@ const LogIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [forgetPasswordAlert, setForgetPaswordAlert] = useState('');
   const router = useRouter();
 
   const onSubmitLogIn = async () => {
@@ -22,10 +27,20 @@ const LogIn = () => {
       router.push('/generator');
     } catch (e) {
       console.error('Error: ' + e.message);
-      setErrorMessage(
-        e.message
-          .replace("Firebase: ", "")
-      );    
+      setErrorMessage(e.message.replace('Firebase: ', ''));
+    }
+  };
+
+  const forgotPassword = async () => {
+    const auth = getAuth(app);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setForgetPaswordAlert(
+        'Check your inbox for an email explaining how to reset your password'
+      );
+    } catch (error) {
+      console.error('Error: ', error.message);
+      setErrorMessage(`${error.message} (${error.code})`);
     }
   };
 
@@ -58,6 +73,7 @@ const LogIn = () => {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
+
           <div className={'flex w-full items-center justify-center'}>
             <button
               type={'submit'}
@@ -67,8 +83,18 @@ const LogIn = () => {
               Log In
             </button>
           </div>
+          <button
+            className='self-center bg-white p-1 rounded-xl mt-2 text-sm'
+            onClick={() => forgotPassword()}
+          >
+            <p>Forgot your password? Enter your email and hit this button</p>
+          </button>
           {errorMessage !== '' && (
-            <div className={'flex rounded-md bg-red-500 w-full items-center justify-center'}>
+            <div
+              className={
+                'flex rounded-md bg-red-500 w-full items-center justify-center'
+              }
+            >
               <p
                 className='hover:cursor-pointer mr-5'
                 onClick={() => setErrorMessage('')}
@@ -78,8 +104,21 @@ const LogIn = () => {
               <p>{errorMessage}</p>
             </div>
           )}
-
-
+          {forgetPasswordAlert !== '' && (
+            <div
+              className={
+                'flex rounded-md bg-blue-500 w-full items-center justify-center'
+              }
+            >
+              <p
+                className='hover:cursor-pointer mr-5'
+                onClick={() => setForgetPaswordAlert('')}
+              >
+                X
+              </p>
+              <p>{forgetPasswordAlert}</p>
+            </div>
+          )}
         </div>
       </main>
     </div>
