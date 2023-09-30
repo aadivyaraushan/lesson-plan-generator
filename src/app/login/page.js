@@ -84,7 +84,7 @@ const LogIn = () => {
             </button>
           </div>
           <button
-            className='self-center bg-white p-1 rounded-xl mt-2 text-sm'
+            className='self-center bg-white p-1 rounded-xl text-black mt-2 text-sm'
             onClick={() => forgotPassword()}
           >
             <p>Forgot your password? Enter your email and hit this button</p>

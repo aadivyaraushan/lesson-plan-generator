@@ -245,12 +245,24 @@ Follow the following guidelines when generating the lesson plan:
   - Learning intention of the entire ongoing chapter / unit. This should be same for all the lessons.
   - Learning objective of the lesson
   - Success criteria (multiple points, make this an array)
-  - Method of linking back to and reviewing learning in prior lessons
-  - Method of introducing the lesson
-  - First activity (lower order activity)
-  - First assessment (lower order assessment)
-  - Second activity (higher order activity)
-  - Second assessment (higher order assessment)
+  - Method of linking back to and reviewing learning in prior lessons ${
+    includesTeacherStudentSplit ? ' with teacher-student split percentage' : ''
+  }
+  - Method of introducing the lesson  ${
+    includesTeacherStudentSplit ? ' with teacher-student split percentage' : ''
+  }
+  - First activity (lower order activity)  ${
+    includesTeacherStudentSplit ? ' with teacher-student split percentage' : ''
+  }
+  - First assessment (lower order assessment)  ${
+    includesTeacherStudentSplit ? ' with teacher-student split percentage' : ''
+  }
+  - Second activity (higher order activity)  ${
+    includesTeacherStudentSplit ? ' with teacher-student split percentage' : ''
+  }
+  - Second assessment (higher order assessment)  ${
+    includesTeacherStudentSplit ? ' with teacher-student split percentage' : ''
+  }
   - Integration into Moral Education Programme
   - Methods to assist students with special education needs and students with disabilities (blindness, deafness, autism and other neurodevelopmental disorders)
   - Critical thinking question of the class
@@ -312,8 +324,10 @@ Extra context on the terms that may be used:
   });
   console.log('generated raw response');
   console.log(rawResponse.text);
-  const JSONResponse = await parsingChain.run(rawResponse.text);
-  JSONResponse['stringResponse'] = rawResponse.text;
+  let JSONResponse = await parsingChain.run(rawResponse.text);
+  if (!Array.isArray(JSONResponse)) {
+    JSONResponse = [JSONResponse];
+  }
   console.log('generated json response');
   console.log(JSONResponse);
   return [JSONResponse, rawResponse.text];
@@ -387,27 +401,12 @@ export const generateDOCX = async (
       moral_education_programme_integration: MEP_integration,
     } = lessonPlans[i - 1];
     console.log('extracted relevant information, generating document bytes');
-    // console.log(teacher_name, subject, chapter_title, i);
-    // console.log(activity_one);
     const urls = urlsNested[i - 1];
-    // const storage = new Storage({
-    //   email: 'ssdear@gmail.com',
-    //   password: process.env.NEXT_PUBLIC_MEGA_PASSWORD,
-    //   userAgent: null,
-    // });
-    // await storage.ready;
-    // const lessonPlanTemplateFile = storage.root.children.find(
-    //   (file) => file.name === 'lesson_plan_template.docx'
-    // );
-    // const data = await getData();
-    // const lessonPlanTemplateFile = data[0]
-    // const templateInBytes = await lessonPlanTemplateFile.downloadBuffer();
     const storage = getStorage();
     console.log('logged in for storage');
     const pathReference = ref(storage, '/lesson_plan_template.docx');
     const templateInBytes = await getBytes(pathReference);
     console.log('generated template bytes');
-    // console.log(templateInBytes);
     const zip = new PizZip(templateInBytes);
     console.log('generated pizzip file');
     const document = new Docxtemplater(zip, {
@@ -415,8 +414,6 @@ export const generateDOCX = async (
       linebreaks: true,
     });
     console.log('generated document file using docxtemplater');
-    // console.log('docx document generated');
-    // console.log('now setting document data');
 
     document.setData({
       teacher_name,
