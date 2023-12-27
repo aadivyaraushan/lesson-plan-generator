@@ -29,7 +29,8 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "src/app/loading/page.js",
-    "src/app/generation/page.js"
+    "src/app/generation/page.js",
+    "src/app/generator/page.js"
   ],
   "exclude": ["node_modules"]
 }

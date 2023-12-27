@@ -1,3 +1,5 @@
+// NOTE: this file actually runs on the client-side, not on the server-side
+
 import { OpenAI } from 'langchain/llms/openai';
 import { ChatOpenAI } from 'langchain/chat_models/openai';
 // import { AlephAlpha } from 'langchain/llms/aleph_alpha';
@@ -35,13 +37,13 @@ export const getData = async () => {
 
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
 const model = new ChatOpenAI({
-  modelName: 'gpt-3.5-turbo-16k-0613',
+  modelName: 'gpt-3.5-turbo-1106',
   temperature: 0.4,
   openAIApiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
 });
 
 const noChatModel = new OpenAI({
-  modelName: 'gpt-3.5-turbo-16k-0613',
+  modelName: 'gpt-3.5-turbo-1106',
   temperature: 0.4,
   openAIApiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
 });
@@ -77,14 +79,14 @@ export const generateTextFromImage = async (image) => {
 // INPUT COSTS $0.003
 
 const websiteGenerationPromptTemplateText = `
-Generate a nested array of queries based on the lesson plan given below. The queries are intended for teachers to search google for resources that may support them in doing these activities in class. Consequently, if no resources are necessary for an activity don't generate a query.
+Generate a nested array of queries based on the lesson plans given below. The queries are intended for teachers to search google for resources that may support them in doing these activities in class. Consequently, if no resources are necessary for an activity don't generate a query.
 While doing this, follow the following procedure:
 1. Identify the most important resource that could help the teacher with doing the activity.
 2. Generate a query to search for that resource.
 
 Follow all of the following guidelines:
-1. The number of arrays in the nested array should be {number}
-2. The length of each array should be 7. Each array should contain 1 query or an empty string for each of the following sections of a lesson plan.
+1. There should be {number} arrays in the nested array.
+2. The length of each array in the nested array should be 7. Each array should contain 1 query or an empty string for each of the following sections of a lesson plan.
   1. Method of linking back to and reviewing learning in prior lessons
   2. Method of introducing the lesson
   3. First activity
@@ -109,9 +111,7 @@ Follow all of the following guidelines:
   - similarly, if the topic is "Mechanics", instead of generating "activities for a mechanics class", "ideas for teaching students mechanics" generate "mechanics simulations" or "importance of mechanics" or "real life applications of mechanics".
 10. Don't generate any queries that include the phrases "ideas" or "activities". For example: 
   - don't generate any query like "activities to review the international system of units in physics".
-11. Add the curriculum, subject and grade to the end of any query you generate.
-  - For example, if the curriculum is "ICSE", the grade is 9, the subject is chemistry and the activity is "review the properties of water and its ability to dissolve solutes" then the query would be "properties of water and its ability to dissolve solutes ICSE class 9 chemistry"
-  - Similarly, if the curriculum is "ICSE", the grade is 9, the subject is english literature and the activity is "discuss the importance of genres in literature" the query would be "importance of genres ICSE class 9 english literature" 
+11. Add the curriculum, subject and grade mentioned in the following lesson plans to the end of any query you generate.
 
 Lesson plan/s:
 -----------------------
@@ -129,7 +129,6 @@ const parsingChain = createExtractionChainFromZod(
     chapter_title: z.string().min(1),
     grade: z.number(),
     section: z.string().min(1),
-    date: z.date(),
     lesson_number: z.number(),
     duration_in_minutes: z.number(),
     learning_intention: z.string().min(1),
@@ -166,9 +165,11 @@ const arrayParser = StructuredOutputParser.fromZodSchema(
     .array(
       z
         .array(z.string().describe('a search query'))
-        .describe('array of queries for one lesson plan')
+        .describe('array of queries for one lesson plan of length 7')
     )
-    .describe('array of queries for all lesson plans')
+    .describe(
+      'array of arrays queries for all lesson plans of length equal to number of lesson plans'
+    )
 );
 
 const format_instructions = arrayParser.getFormatInstructions();
@@ -218,7 +219,7 @@ export const generateLessonPlan = async (
   previous_covered_content
 ) => {
   const lessonPromptTemplateText = `
-Generate a lesson description, given that:
+Generate a set of {lesson_number} lesson descriptions, given that:
 Teacher name: {teacher_name}
 Subject: {subject}
 Chapter title: {chapter_title}
@@ -234,8 +235,8 @@ Moral Education Objectives:
 {moral_education_objectives}
 Content covered previously: 
 {previous_covered_content}
-Follow the following guidelines when generating the lesson plan:
-1. For each lesson, include, in key/value pairs, values for the:
+Follow the following guidelines when generating the lesson plans:
+1. For each lesson plan, include, in key/value pairs in a bulleted list in the format "a: b" with a colon, values for ALL of the following (do not omit any of these in any of the lesson plans generated):
   - Teacher name
   - Subject
   - Chapter title
@@ -251,16 +252,16 @@ Follow the following guidelines when generating the lesson plan:
   - Method of introducing the lesson  ${
     includesTeacherStudentSplit ? ' with teacher-student split percentage' : ''
   }
-  - First activity (lower order activity)  ${
+  - First activity (lower order activity) of the lesson  ${
     includesTeacherStudentSplit ? ' with teacher-student split percentage' : ''
   }
-  - First assessment (lower order assessment)  ${
+  - First assessment (lower order assessment) of the lesson  ${
     includesTeacherStudentSplit ? ' with teacher-student split percentage' : ''
   }
-  - Second activity (higher order activity)  ${
+  - Second activity (higher order activity) of the lesson  ${
     includesTeacherStudentSplit ? ' with teacher-student split percentage' : ''
   }
-  - Second assessment (higher order assessment)  ${
+  - Second assessment (higher order assessment) of the lesson  ${
     includesTeacherStudentSplit ? ' with teacher-student split percentage' : ''
   }
   - Integration into Moral Education Programme
@@ -277,14 +278,16 @@ Follow the following guidelines when generating the lesson plan:
 4. Generate the lesson plan in future tense declarative. DO NOT BE IMPERATIVE IN HOW YOU GENERATE. For example:
   - Instead of generating: "Show students a large number written on the board and ask them to identify the place value and face value of a specific digit."
   - Generate: "Teachers will show students a large number written on the board and ask them to identify the place value and face value of a specific digit."
+  - Also, please do not use the name of the teacher in any place other than next to "Teacher name" in the bulleted list above. Instead, say "The teacher".
 5. Include the assessment of home learning of a prior lesson in the lesson plans of subsequent lessons.
 6. Closely tailor the plans you generate to the requirements of the {curriculum} curriculum. Make sure that lesson plans for the same topic aren't the same for two different curricula.
 7. Don't be repetitive in the lesson plans you generate. Two consecutive lesson plans should not have the same activities.
 8. Make each lesson plan unique to the topic. Don't be generic with what you generate. Two lesson plans of different topics should not have the same activities.
 9. Generate the "Method to link back to prior learning" for the first lesson plan based on the content covered previously given above ({previous_covered_content}). For the lesson plans after the first lesson plan, generate the method to link back to prior learning based on the prior lesson plans.
+10. Do not omit the second activity and second assessment in the first lesson plan.
 ${
   includesTeacherStudentSplit
-    ? `10. Generate the teacher-student involvement split percentage in brackets for placement at the end of the description of the method to link back to prior lessons, method to introduce the lesson, first activity, first assessment, second activity and second assessment. The teacher-student involvement split percentage is a percentage that tells how much percent of the activity a teacher must be involved in and how much percent of the activity a student must be involved in.
+    ? `11. Generate the teacher-student involvement split percentage in brackets for placement at the end of the description of the method to link back to prior lessons, method to introduce the lesson, first activity, first assessment, second activity and second assessment. The teacher-student involvement split percentage is a percentage that tells how much percent of the activity a teacher must be involved in and how much percent of the activity a student must be involved in.
     - For example, an activity with brackets might like: "Experiment to determine relationship between resistivity and length (70% student-led, 30% teacher-led)".
 `
     : ''
@@ -295,8 +298,8 @@ Extra context on the terms that may be used:
 1. Higher order refers to the "create", "evaluate" and "analyse" levels in Blooms' taxonomy. It also refers to the "extended abstract" and "relational" parts of the SOLO taxonomy. This means that knowledge is heavily interconnected and students have an integrated understanding of a topic. Lots of questions and topics about evaluating relations of concepts would be here.  
 2. Medium order refers to the "apply" and "understand" levels in Blooms' taxonomy. It also refers to the "multistructural" part of the SOLO taxonomy. This means that knowledge is somewhat interconnected and students have a somewhat integrated understanding. Largely just questions and topics about how some knowledge can be used in new ways.
 3. Low order refers to the "remember" level in Blooms' taxonomy. It refers to the "unistructural" part of SOLO taxonomy. This means knowledge is completely isolated and students know knowledge only in isolation. This is largely memorisation-based stuff.
-4. ICSE is an Indian syllabus where greater emphasis is placed on learning from a textbook, a strict syllabus and end-of-year exams.
-5. MYP is an international syllabus where greater emphasis is placed on research-centric learning, project-based learning/assessment and international mindedness.
+4. ICSE is an Indian syllabus where greater emphasis is placed on learning from a textbook, a strict syllabus and end-of-year exams. ISC is the senior school version of this.
+5. MYP is an international syllabus where greater emphasis is placed on research-centric learning, project-based learning/assessment and international mindedness. IB is the senior school version of this.
 `;
 
   // console.log(lessonPromptTemplateText);
@@ -363,11 +366,15 @@ export const generateURLsFromLessonPlan = async (lessonPlansRaw, number) => {
 export const generateDOCX = async (
   lessonPlans,
   urlsNested,
-  templateInBytes
+  templateInBytes,
+  email,
+  sendMethod
 ) => {
   console.log('generateDOCX running');
+  console.log(email);
   // console.log(lessonPlans);
   // console.log(lessonPlans.length);
+  console.log(sendMethod);
   let lessonPlanDocuments = [];
 
   for (let i = 1; i <= lessonPlans.length; i++) {
@@ -460,18 +467,53 @@ export const generateDOCX = async (
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       });
 
-      console.log('docx generated');
-
       lessonPlanDocuments.push(generatedLessonPlanDocx);
-
-      saveAs(
-        generatedLessonPlanDocx,
-        `${teacher_name} - ${subject}, ${chapter_title} - Lesson ${i}.docx`
-      );
     } catch (e) {
       console.error(`Error: ${e}`);
     }
   }
 
-  return lessonPlanDocuments;
+  if (sendMethod === 'directDownload') {
+    for (let i = 0; i < lessonPlanDocuments.length; i++) {
+      saveAs(
+        lessonPlanDocuments[i],
+        `${lessonPlans[i].teacher_name} - ${lessonPlans[i].subject}, ${
+          lessonPlans[i].chapter_title
+        } - Lesson ${i + 1}.docx`
+      );
+    }
+  }
+
+  if (sendMethod === 'email') {
+    // add lessonPlanDocuments to body of POST request and send it to email API route
+    const formData = new FormData();
+
+    for (const lessonPlanDocument of lessonPlanDocuments) {
+      formData.append('lesson plans', lessonPlanDocument);
+    }
+    console.log(formData.getAll('lesson plans'));
+
+    const teacherName = lessonPlans[0].teacher_name;
+    const lessonSubject = lessonPlans[0].subject;
+    const topic = lessonPlans[0].chapter_title;
+    try {
+      const response = await fetch(
+        `/api/email?subject=${`Generated lesson plans for ${topic}`}&userEmail=${email}&teacherName=${teacherName}&text=${`Dear ${teacherName}, 
+      Please find attached your lesson plans for ${topic}.
+
+      Regards,
+      LessonGPT
+      `}&lessonSubject=${lessonSubject}&topic=${topic}`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      );
+      const data = await response.json();
+    } catch (error) {
+      console.error('Error: ' + error);
+    }
+  }
+
+  // return lessonPlanDocuments;
 };

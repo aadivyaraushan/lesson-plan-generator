@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, createContext, useContext } from 'react';
+import React, { useState } from 'react';
 import {
   getAuth,
   sendPasswordResetEmail,
@@ -7,6 +7,8 @@ import {
 } from 'firebase/auth';
 import { app } from '../../backend/firebase.js';
 import { useRouter } from 'next/navigation.js';
+import { logEvent } from 'firebase/analytics';
+import { analytics } from '../../backend/firebase.js';
 
 const LogIn = () => {
   const [email, setEmail] = useState('');
@@ -24,6 +26,9 @@ const LogIn = () => {
         password
       );
       const user = userCredential.user;
+      logEvent(analytics, 'login', {
+        email,
+      });
       router.push('/generator');
     } catch (e) {
       console.error('Error: ' + e.message);

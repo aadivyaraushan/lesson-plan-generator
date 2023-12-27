@@ -8,19 +8,20 @@ import * as cors from 'cors';
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: 'AIzaSyCGK3X4DuhjSiRdnsRP-YtjJT4w_u653x4',
-  authDomain: 'lesson-plan-generator-e877a.firebaseapp.com',
-  projectId: 'lesson-plan-generator-e877a',
-  storageBucket: 'lesson-plan-generator-e877a.appspot.com',
-  messagingSenderId: '644340034732',
-  appId: '1:644340034732:web:c885ce62e6166ea961c309',
-};
+const firebaseConfig = JSON.parse(process.env.NEXT_PUBLIC_FIREBASE_CONFIG);
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
-const authentication = getAuth(app);
-const analytics = getAnalytics(app);
+let analytics;
+let storage;
+let authentication;
+let app;
+if (firebaseConfig?.projectId) {
+  app = initializeApp(firebaseConfig);
+  storage = getStorage(app);
+  authentication = getAuth(app);
+  if (app.name && typeof window !== 'undefined') {
+    analytics = getAnalytics(app);
+  }
+}
 
 export { app, storage, authentication, analytics };
