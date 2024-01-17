@@ -1,14 +1,15 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   getAuth,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
 } from 'firebase/auth';
-import { app } from '../../backend/firebase.js';
+import { app, db } from '../../backend/firebase.js';
 import { useRouter } from 'next/navigation.js';
 import { logEvent } from 'firebase/analytics';
 import { analytics } from '../../backend/firebase.js';
+import { getDocs, query, where, collection } from 'firebase/firestore';
 
 const LogIn = () => {
   const [email, setEmail] = useState('');
@@ -29,6 +30,16 @@ const LogIn = () => {
       logEvent(analytics, 'login', {
         email,
       });
+      const userDocs = await getDocs(
+        query(collection(db, 'users'), where('email', '==', email))
+      );
+      userDocs.forEach((doc) => {
+        console.log(doc.data());
+        if (doc.data().isAdmin) {
+          sessionStorage.setItem('isAdmin', 'true');
+        }
+      });
+
       router.push('/generator');
     } catch (e) {
       console.error('Error: ' + e.message);
