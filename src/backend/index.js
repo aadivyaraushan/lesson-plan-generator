@@ -22,8 +22,6 @@ import { app, db } from './firebase.js';
 import { createExtractionChainFromZod } from 'langchain/chains';
 import { StructuredOutputParser } from 'langchain/output_parsers';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { zodToJsonSchema } from 'zod-to-json-schema';
-import { JsonOutputFunctionsParser } from 'langchain/output_parsers';
 
 export const getData = async () => {
   const drive = google.drive({ version: 'v3', auth });
@@ -39,6 +37,11 @@ export const getData = async () => {
 };
 
 // pdfMake.vfs = pdfFonts.pdfMake.vfs;
+const model = new ChatOpenAI({
+  modelName: 'gpt-3.5-turbo-1106',
+  temperature: 0.4,
+  openAIApiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+});
 
 const noChatModel = new OpenAI({
   modelName: 'gpt-3.5-turbo-1106',
@@ -112,84 +115,40 @@ Follow these formatting instructions:
 {format_instructions}
 `;
 
-// const lessonPlanParser = StructuredOutputParser.fromZodSchema(
-//   z.array(
-//     z.object({
-//       teacher_name: z.string().min(1),
-//       subject: z.string().min(1),
-//       chapter_title: z.string().min(1),
-//       grade: z.number(),
-//       section: z.string().min(1),
-//       lesson_number: z.number(),
-//       duration_in_minutes: z.number(),
-//       learning_intention: z.string().min(1),
-//       learning_objective: z.string().min(1),
-//       success_criteria: z.string().min(1),
-//       reference_to_prior_learning: z.string().min(1),
-//       lesson_introduction: z.string().min(1),
-//       activity_one: z.string().min(1),
-//       assessment_one: z.string().min(1),
-//       activity_two: z.string().min(1),
-//       assessment_two: z.string().min(1),
-//       moral_education_programme_integration: z.string().min(1),
-//       special_education_and_needs: z.string().min(1),
-//       critical_thinking_question: z.string().min(1),
-//       cross_curricular_link: z.string().min(1),
-//       resources: z.string().min(1),
-//       home_learning: z.string().min(1),
-//       high_order_questions: z.string().min(1),
-//       medium_order_questions: z.string().min(1),
-//       low_order_questions: z.string().min(1),
-//     })
-//   ),
-//   model
-// );
-const lessonPlanSchema = z.array(
-  z.object({
-    teacher_name: z.string().min(1),
-    subject: z.string().min(1),
-    chapter_title: z.string().min(1),
-    grade: z.number(),
-    section: z.string().min(1),
-    lesson_number: z.number(),
-    duration_in_minutes: z.number(),
-    learning_intention: z.string().min(1),
-    learning_objective: z.string().min(1),
-    success_criteria: z.string().min(1),
-    reference_to_prior_learning: z.string().min(1),
-    lesson_introduction: z.string().min(1),
-    activity_one: z.string().min(1),
-    assessment_one: z.string().min(1),
-    activity_two: z.string().min(1),
-    assessment_two: z.string().min(1),
-    moral_education_programme_integration: z.string().min(1),
-    special_education_and_needs: z.string().min(1),
-    critical_thinking_question: z.string().min(1),
-    cross_curricular_link: z.string().min(1),
-    resources: z.string().min(1),
-    home_learning: z.string().min(1),
-    high_order_questions: z.string().min(1),
-    medium_order_questions: z.string().min(1),
-    low_order_questions: z.string().min(1),
-  })
+const lessonPlanParser = StructuredOutputParser.fromZodSchema(
+  z.array(
+    z.object({
+      teacher_name: z.string().min(1),
+      subject: z.string().min(1),
+      chapter_title: z.string().min(1),
+      grade: z.number(),
+      section: z.string().min(1),
+      lesson_number: z.number(),
+      duration_in_minutes: z.number(),
+      learning_intention: z.string().min(1),
+      learning_objective: z.string().min(1),
+      success_criteria: z.string().min(1),
+      reference_to_prior_learning: z.string().min(1),
+      lesson_introduction: z.string().min(1),
+      activity_one: z.string().min(1),
+      assessment_one: z.string().min(1),
+      activity_two: z.string().min(1),
+      assessment_two: z.string().min(1),
+      moral_education_programme_integration: z.string().min(1),
+      special_education_and_needs: z.string().min(1),
+      critical_thinking_question: z.string().min(1),
+      cross_curricular_link: z.string().min(1),
+      resources: z.string().min(1),
+      home_learning: z.string().min(1),
+      high_order_questions: z.string().min(1),
+      medium_order_questions: z.string().min(1),
+      low_order_questions: z.string().min(1),
+    })
+  ),
+  model
 );
 
-const lessonPlanFunctionSchema = {
-  name: 'output_formatter',
-  description: 'Should always be used to properly format output',
-  parameters: zodToJsonSchema(lessonPlanSchema),
-};
-
-const model = new ChatOpenAI({
-  modelName: 'gpt-3.5-turbo-1106',
-  temperature: 0.4,
-  openAIApiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
-}).bind({
-  functions: [lessonPlanFunctionSchema],
-  function_call: { name: 'output_formatter' },
-});
-
-// const lessonPlanFormatInstructions = lessonPlanParser.getFormatInstructions();
+const lessonPlanFormatInstructions = lessonPlanParser.getFormatInstructions();
 // const arrayParser = StructuredOutputParser.fromZodSchema(
 //   z
 //     .array(z.string())
@@ -321,6 +280,9 @@ Extra context on the terms that may be used:
 4. ICSE is an Indian syllabus where greater emphasis is placed on learning from a textbook, a strict syllabus and end-of-year exams. ISC is the senior school version of this.
 5. MYP is an international syllabus where greater emphasis is placed on research-centric learning, project-based learning/assessment and international mindedness. IB is the senior school version of this.
 
+Follow these formatting instructions:
+{format_instructions}
+
 `;
 
   // console.log(lessonPromptTemplateText);
@@ -331,11 +293,8 @@ Extra context on the terms that may be used:
     HumanMessagePromptTemplate.fromTemplate(lessonPromptTemplateText),
   ]);
 
-  const outputParser = new JsonOutputFunctionsParser();
-
-  // const chain = new LLMChain({ llm: model, prompt: lessonPromptTemplate });
-  const chain = lessonPromptTemplate.pipe(model).pipe(outputParser);
-  const rawResponse = await chain.invoke({
+  const chain = new LLMChain({ llm: model, prompt: lessonPromptTemplate });
+  const rawResponse = await chain.call({
     teacher_name,
     subject,
     chapter_title,
@@ -348,9 +307,12 @@ Extra context on the terms that may be used:
     duration,
     curriculum,
     previous_covered_content,
+    format_instructions: lessonPlanFormatInstructions,
   });
   console.log('generated raw response');
-  console.log(JSON.stringify(rawResponse, null, 2));
+  const lessonPlansParsed = lessonPlanParser.parse(rawResponse.text);
+  console.log('lesson plans parsed: ', lessonPlansParsed);
+  console.log(rawResponse.text);
   // let JSONResponse = await parsingChain.run(rawResponse.text);
   // if (!Array.isArray(JSONResponse)) {
   //   JSONResponse = [JSONResponse];
